@@ -1,0 +1,633 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include<stdio.h>
+#include<stdlib.h>
+#include <string.h>
+#include<windows.h>
+
+//노드 정의//
+typedef struct Node
+{
+	char name[50];
+	int age;
+	char phone[15];
+	char address[100];
+	int medicine_count;
+	char medicine_names[10][50];
+	struct Node* next;
+}D_Node;
+
+//함수 선언//
+void F_add_node(D_Node** head);						//1번 C
+void B_add_node(D_Node** head);						//2번 C
+void addBeforeNode(D_Node** head);                  //3번 C
+void addAfterNode(D_Node** head);					//4번 C
+void deleteFirstNode(D_Node** head);				//5번 C
+void deleteLastNode(D_Node** head);					//6번 C
+
+void deleteALLNode(D_Node** head);					//8번 C
+void ModifyNode(D_Node* head);						//9번 
+
+void print_list(D_Node* head);						//11번 C
+
+
+
+
+void bubbleSort(D_Node** head);						//16번 C
+
+
+//함수//
+void cur(short x, short y)
+{
+	COORD pos = { x, y };
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+
+D_Node* create_node()
+{
+	D_Node* new_node = (D_Node*)malloc(sizeof(D_Node));
+
+	printf("이름을 입력하세요: ");
+	scanf_s("%49s", new_node->name, sizeof(new_node->name));
+
+	printf("나이를 입력하세요: ");
+	scanf_s("%d", &new_node->age);
+
+	printf("전화번호를 입력하세요: ");
+	scanf_s("%14s", new_node->phone, sizeof(new_node->phone));
+
+	printf("주소를 입력하세요: ");
+	scanf_s("%99s", new_node->address, sizeof(new_node->address));
+
+	printf("약의 갯수를 입력하세요: ");
+	scanf_s("%d", &new_node->medicine_count);
+
+	printf("약의 이름을 입력하세요\n");
+	for (int i = 0; i < new_node->medicine_count; ++i) 
+	{
+		printf("약 %d: ", i + 1);
+		scanf_s("%49s", new_node->medicine_names[i], sizeof(new_node->medicine_names[i]));
+	}
+
+	new_node->next = NULL;
+	return new_node;
+}
+
+//1번
+void F_add_node(D_Node** head)
+{
+	D_Node* new_node = create_node();
+	new_node->next = *head;                     
+	*head = new_node;
+}
+
+//2번
+void B_add_node(D_Node** head)
+{
+	D_Node* new_node = create_node();
+	if (*head == NULL)
+	{
+		*head = new_node;
+	}
+	else {
+		D_Node* cur = *head;
+		while (cur->next != NULL)
+		{
+			cur = cur->next;
+		}
+		cur->next = new_node;
+	}
+}
+
+//3번 앞에 추가
+void addBeforeNode(D_Node** head) 
+{
+	D_Node* cur = *head;
+	D_Node* prev = NULL;
+
+	printf("몇번 환자 앞에 데이터를 추가하시겠습니까? : ");
+	int position3;
+	scanf_s("%d", &position3);
+
+	//노드의 데이터가 searchData와 일치하는 노드를 찾음
+	int count=0;
+	while (cur != NULL && count < position3) 
+	{
+		prev = cur;
+		cur = cur->next;
+		count++;
+	}
+
+	if (cur == NULL) 
+	{
+		// searchData와 일치하는 노드를 찾지 못한 경우
+		printf("일치하는 노드를 찾을 수 없습니다.\n");
+	}
+	else 
+	{
+		// 새로운 노드 동적 할당
+		D_Node* new_node = (D_Node*)malloc(sizeof(D_Node));
+		if (new_node == NULL) 
+		{
+			printf("메모리 할당 오류\n");
+			exit(EXIT_FAILURE);
+		}
+
+		printf("추가할 데이터를 입력하세요.\n");
+			;
+		printf("이름을 입력하세요: ");
+		scanf_s("%49s", new_node->name, sizeof(new_node->name));
+
+		printf("나이를 입력하세요: ");
+		scanf_s("%d", &new_node->age);
+
+		printf("전화번호를 입력하세요: ");
+		scanf_s("%14s", new_node->phone, sizeof(new_node->phone));
+
+		printf("주소를 입력하세요: ");
+		scanf_s("%99s", new_node->address, sizeof(new_node->address));
+
+		printf("약의 갯수를 입력하세요: ");
+		scanf_s("%d", &new_node->medicine_count);
+
+		printf("약의 이름을 입력하세요\n");
+		for (int i = 0; i < new_node->medicine_count; ++i)
+		{
+			printf("약 %d: ", i + 1);
+			scanf_s("%49s", new_node->medicine_names[i], sizeof(new_node->medicine_names[i]));
+		}
+
+		// 이전 노드가 없는 경우 (즉, 찾은 노드가 헤드인 경우)
+		if (prev == NULL) 
+		{
+			new_node->next = *head;
+			*head = new_node; // 헤드를 새로운 노드로 업데이트
+		}
+		else 
+		{
+			// 이전 노드가 있는 경우
+			new_node->next = prev->next;
+			prev->next = new_node;
+		}
+	}
+}
+
+//4번
+void addAfterNode(D_Node** head)
+{
+	D_Node* cur = *head;
+	D_Node* prev = NULL;
+
+	printf("몇번 환자 뒤에 데이터를 추가하시겠습니까? : ");
+	int position4;
+	scanf_s("%d", &position4);
+
+	//노드의 데이터가 searchData와 일치하는 노드를 찾음
+	int count = 0;
+	while (cur != NULL && count < position4)
+	{
+		prev = cur;
+		cur = cur->next;
+		count++;
+	}
+
+	if (cur == NULL)
+	{
+		// searchData와 일치하는 노드를 찾지 못한 경우
+		printf("일치하는 노드를 찾을 수 없습니다.\n");
+	}
+	else
+	{
+		// 새로운 노드 동적 할당
+		D_Node* new_node = (D_Node*)malloc(sizeof(D_Node));
+		if (new_node == NULL)
+		{
+			printf("메모리 할당 오류\n");
+			exit(EXIT_FAILURE);
+		}
+
+		printf("추가할 데이터를 입력하세요.\n");
+		;
+		printf("이름을 입력하세요: ");
+		scanf_s("%49s", new_node->name, sizeof(new_node->name));
+
+		printf("나이를 입력하세요: ");
+		scanf_s("%d", &new_node->age);
+
+		printf("전화번호를 입력하세요: ");
+		scanf_s("%14s", new_node->phone, sizeof(new_node->phone));
+
+		printf("주소를 입력하세요: ");
+		scanf_s("%99s", new_node->address, sizeof(new_node->address));
+
+		printf("약의 갯수를 입력하세요: ");
+		scanf_s("%d", &new_node->medicine_count);
+
+		printf("약의 이름을 입력하세요\n");
+		for (int i = 0; i < new_node->medicine_count; ++i)
+		{
+			printf("약 %d: ", i + 1);
+			scanf_s("%49s", new_node->medicine_names[i], sizeof(new_node->medicine_names[i]));
+		}
+		new_node->next = cur->next;
+		cur->next = new_node;
+	}
+}
+
+//5번
+void deleteFirstNode(D_Node** head)
+{
+	if (*head == NULL) {
+		printf("삭제할 노드가 없습니다.\n");
+		return;
+	}
+
+	D_Node* new_head = (*head)->next;
+	free(*head);
+	*head = new_head;
+}
+
+//6번
+void deleteLastNode(D_Node** head)
+{
+	if (*head == NULL)
+	{
+		printf("삭제할 노드가 없습니다.\n");
+		return;
+	}
+
+	if ((*head)->next == NULL)
+	{
+		free(*head);
+		*head = NULL;
+	}
+	else
+	{
+		D_Node* cur = *head;
+		while (cur->next->next != NULL)
+		{
+			cur = cur->next;
+		}
+		free(cur->next);
+		cur->next = NULL;
+	}
+}
+
+//7번
+
+//8번
+void deleteALLNode(D_Node** head)
+{
+	D_Node* prev = *head;
+
+	while (*head)
+	{
+		*head = (*head)->next;
+
+		//printf("삭제할 데이터 값 : %d\n", prev->data);
+		free(prev);
+		prev = *head;
+	}
+}
+
+//9번
+
+//10번
+
+//11번
+void print_list(D_Node* head)
+{
+	D_Node* cur = head;
+	while (cur != NULL) {
+		printf("\n이름: %s\n나이: %d\n전화번호: %s\n주소: %s\n약의 갯수: %d\n약의 이름: ",
+			cur->name, cur->age, cur->phone, cur->address, cur->medicine_count);
+
+		for (int i = 0; i < cur->medicine_count; ++i)
+		{
+			printf("%s ", cur->medicine_names[i]);
+		}
+
+		printf("\n\n");
+		cur = cur->next;
+	}
+}
+
+//16번
+void bubbleSort(D_Node** head) {
+	int swapped;
+	D_Node* cur;
+	D_Node* last = NULL;
+
+	// 빈 리스트 또는 하나의 노드만 있는 경우 정렬할 필요 없음
+	if (*head == NULL || (*head)->next == NULL) 
+	{
+		return;
+	}
+
+	do 
+	{
+		swapped = 0;
+		cur = *head;
+		D_Node* prev = NULL;
+
+		while (cur->next != last) 
+		{
+			// 현재 노드와 다음 노드의 이름을 비교하여 교환
+			if (strcmp(cur->name, cur->next->name) > 0) {
+				// 이름이 더 크다면 노드의 주소를 교환
+				D_Node* temp = cur->next;
+				cur->next = temp->next;
+				temp->next = cur;
+
+				if (prev == NULL) 
+				{
+					// 헤드를 바꾸어야 하는 경우
+					*head = temp;
+				}
+				else 
+				{
+					prev->next = temp;
+				}
+
+				cur = temp;
+				swapped = 1;
+			}
+
+			prev = cur;
+			cur = cur->next;
+		}
+
+		last = cur;
+
+	} while (swapped);
+}
+
+//17번
+
+//18번
+
+//19번
+//메모리 반납
+void free_list(D_Node* head)
+{
+	D_Node* cur = head;
+	D_Node* next_node;
+	while (cur != NULL)
+	{
+		next_node = cur->next;
+		free(cur);
+		cur = next_node;
+	}
+}
+
+//메인//
+
+int main()
+{
+	D_Node* head = NULL;
+
+	COORD pos = { 0,0 };	//커서 위치
+	
+	int C_num;
+	while (1)
+	{
+		printf("-----이용하실 서비스를 선택하세요!-----\n");
+		printf("1.  새로운 환자 정보 입력(앞)\n");
+		printf("2.  새로운 환자 정보 입력(뒤)\n");
+		printf("3.  특정 환자 앞에 정보 입력\n");
+		printf("4.  특정 환자 뒤에 정보 입력\n");
+		printf("5.  맨 앞 환자 정보 삭제\n");
+		printf("6.  맨 뒤 환자 정보 삭제\n");
+		printf("7.  특정 환자 정보 삭제\n");
+		printf("8.  모든 환자 정보 삭제\n");
+		printf("9.  특정 환자 정보 수정\n");
+		printf("10. 특정 환자 정보 읽기\n");
+		printf("11. 모든 환자 정보 읽기\n");
+		printf("12. 단일 선형 탐색으로 환자 정보 찾기\n");
+		printf("13. 다중 선형 탐색으로 환자 정보 찾기\n");
+		printf("14. 단일 이진 탐색으로 환자 정보 찾기\n");
+		printf("15. 다중 이진 탐색으로 환자 정보 찾기\n");
+		printf("16. 거품 정렬\n");
+		printf("17. 삽입 정렬\n");
+		printf("18. 선택 정렬\n");
+		printf("20. 프로그램을 종료합니다.\n");
+		printf("번호를 입력 해 주세요: ");
+		if (scanf_s("%d", &C_num) != 1)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("잘못된 값을 입력 했습니다\n");
+			while (getchar() != '\n');
+			continue;
+		}
+		printf("\n");
+		if (C_num == 1)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			F_add_node(&head);
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			print_list(head);
+			printf("\n");
+		}
+
+		else if (C_num == 2)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			B_add_node(&head);
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			print_list(head);
+			printf("\n");
+		}
+
+		else if (C_num == 3)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			addBeforeNode(&head);
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			print_list(head);
+			printf("\n");
+		}
+
+		else if (C_num == 4)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			addAfterNode(&head);
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			print_list(head);
+			printf("\n");
+		}
+
+		else if (C_num == 5)
+		{
+			// 앞 노드 데이터 삭제
+			deleteFirstNode(&head);
+			if (head != NULL)
+			{
+				system("cls");
+				SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+				printf("현재 연결 리스트: ");
+				print_list(head);
+				printf("\n");
+			}
+			else
+			{
+				system("cls");
+				SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+				printf("현재 리스트가 비었습니다.\n");
+			}
+		}
+
+		else if (C_num == 6)
+		{
+			// 뒤 노드 데이터 삭제
+			deleteLastNode(&head);
+			if (head != NULL)
+			{
+				system("cls");
+				SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+				printf("현재 연결 리스트: ");
+				print_list(head);
+				printf("\n");
+			}
+			else
+			{
+				system("cls");
+				SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+				printf("현재 리스트가 비었습니다.\n");
+			}
+		}
+
+		else if (C_num == 7)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			printf("\n");
+		}
+
+		else if (C_num == 8)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			deleteALLNode(&head);
+			printf("모두 삭제 되었습니다.\n");
+			printf("현재 환자 명단 상태: ");
+			print_list(head);
+			printf("\n");
+		}
+
+		else if (C_num == 9)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			printf("\n");
+		}
+
+		else if (C_num == 10)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			printf("\n");
+		}
+
+		else if (C_num == 11)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			print_list(head);
+			printf("\n");
+		}
+
+		else if (C_num == 12)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			printf("\n");
+		}
+
+		else if (C_num == 13)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			printf("\n");
+		}
+
+		else if (C_num == 14)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			printf("\n");
+		}
+
+		else if (C_num == 15)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			printf("\n");
+		}
+
+		else if (C_num == 16)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			bubbleSort(&head);
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("버블 정렬이 완료되었습니다.\n");
+			printf("현재 환자 명단 상태: ");
+			print_list(head);
+			printf("\n");
+		}
+
+		else if (C_num == 17)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			printf("\n");
+		}
+
+		else if (C_num == 18)
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("현재 환자 명단 상태: ");
+			printf("\n");
+		}
+
+		else if (C_num == 20)
+		{
+			break;
+		}
+
+		else
+		{
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			printf("잘못된 값을 입력 했습니다\n");
+			while (getchar() != '\n');
+			continue;
+		}
+
+	}
+	free_list(head);
+	return 0;
+}
