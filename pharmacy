@@ -23,17 +23,18 @@ void addBeforeNode(D_Node** head);                  //3번 C
 void addAfterNode(D_Node** head);					//4번 C
 void deleteFirstNode(D_Node** head);				//5번 C
 void deleteLastNode(D_Node** head);					//6번 C
-
+void deleteSearchNode(D_Node** head);				//7번 c
 void deleteALLNode(D_Node** head);					//8번 C
-void ModifyNode(D_Node* head);						//9번 
-
+void ModifyNode(D_Node** head);						//9번 c
+//10번
 void print_list(D_Node* head);						//11번 C
-
-
-
-
+//12번
+//13번
+//14번
+//15번
 void bubbleSort(D_Node** head);						//16번 C
-
+//17번
+//18번 끝
 
 //함수//
 void cur(short x, short y)
@@ -72,7 +73,7 @@ D_Node* create_node()
 	return new_node;
 }
 
-//1번
+//1번 o
 void F_add_node(D_Node** head)
 {
 	D_Node* new_node = create_node();
@@ -80,7 +81,7 @@ void F_add_node(D_Node** head)
 	*head = new_node;
 }
 
-//2번
+//2번 o
 void B_add_node(D_Node** head)
 {
 	D_Node* new_node = create_node();
@@ -98,7 +99,7 @@ void B_add_node(D_Node** head)
 	}
 }
 
-//3번 앞에 추가
+//3번 o
 void addBeforeNode(D_Node** head) 
 {
 	D_Node* cur = *head;
@@ -171,7 +172,7 @@ void addBeforeNode(D_Node** head)
 	}
 }
 
-//4번
+//4번 o
 void addAfterNode(D_Node** head)
 {
 	D_Node* cur = *head;
@@ -233,7 +234,7 @@ void addAfterNode(D_Node** head)
 	}
 }
 
-//5번
+//5번 o
 void deleteFirstNode(D_Node** head)
 {
 	if (*head == NULL) {
@@ -246,7 +247,7 @@ void deleteFirstNode(D_Node** head)
 	*head = new_head;
 }
 
-//6번
+//6번 o
 void deleteLastNode(D_Node** head)
 {
 	if (*head == NULL)
@@ -272,9 +273,55 @@ void deleteLastNode(D_Node** head)
 	}
 }
 
-//7번
+//7번 o
+void deleteSearchNode(D_Node** head)
+{
+	D_Node* cur = *head;
+	D_Node* prev = NULL;
+	int position3;
 
-//8번
+	printf("몇 번 환자의 데이터를 삭제하시겠습니까? (0부터 시작): ");
+	scanf_s("%d", &position3);
+
+	if (*head == NULL)
+	{
+		printf("삭제할 노드가 없습니다.\n");
+		return;
+	}
+
+	if (position3 == 0)
+	{
+		// 헤드 노드를 삭제하는 경우
+		D_Node* temp = *head;
+		*head = (*head)->next;
+		free(temp);
+		return;
+	}
+
+	int count = 0;
+	// 노드의 위치를 찾음
+	while (cur != NULL && count < position3)
+	{
+		prev = cur;
+		cur = cur->next;
+		count++;
+	}
+
+	if (cur == NULL)
+	{
+		// searchData와 일치하는 노드를 찾지 못한 경우
+		printf("일치하는 노드를 찾을 수 없습니다.\n");
+		return;
+	}
+
+	// 찾은 노드를 삭제
+	D_Node* temp = cur;
+	prev->next = cur->next;
+	free(temp);
+	return;
+}
+
+//8번 o
 void deleteALLNode(D_Node** head)
 {
 	D_Node* prev = *head;
@@ -289,11 +336,96 @@ void deleteALLNode(D_Node** head)
 	}
 }
 
-//9번
+//9번 o
+void ModifyNode(D_Node** head)
+{
+	D_Node* cur = *head;
+	D_Node* prev = NULL;
+
+	printf("몇번 환자의 데이터를 수정하시겠습니까? : ");
+	int position3;
+	scanf_s("%d", &position3);
+
+	//노드의 데이터가 searchData와 일치하는 노드를 찾음
+	int count = 0;
+	while (cur != NULL && count < position3)
+	{
+		prev = cur;
+		cur = cur->next;
+		count++;
+	}
+
+	if (cur == NULL)
+	{
+		// searchData와 일치하는 노드를 찾지 못한 경우
+		printf("일치하는 노드를 찾을 수 없습니다.\n");
+		return;
+	}
+	//
+	if (position3 == 0)
+	{
+		// 헤드 노드를 삭제하는 경우
+		D_Node* temp = *head;
+		*head = (*head)->next;
+		free(temp);
+	}
+	else
+	{
+		// 찾은 노드를 삭제
+		D_Node* temp = cur;
+		prev->next = cur->next;
+		free(temp);
+	}
+	//
+	// 새로운 노드 동적 할당
+	D_Node* new_node = (D_Node*)malloc(sizeof(D_Node));
+	if (new_node == NULL)
+	{
+		printf("메모리 할당 오류\n");
+		exit(EXIT_FAILURE);
+	}
+
+	printf("수정할 데이터를 입력하세요.\n");
+	
+	printf("이름을 입력하세요: ");
+	scanf_s("%49s", new_node->name, sizeof(new_node->name));
+
+	printf("나이를 입력하세요: ");
+	scanf_s("%d", &new_node->age);
+
+	printf("전화번호를 입력하세요: ");
+	scanf_s("%14s", new_node->phone, sizeof(new_node->phone));
+
+	printf("주소를 입력하세요: ");
+	scanf_s("%99s", new_node->address, sizeof(new_node->address));
+
+	printf("약의 갯수를 입력하세요: ");
+	scanf_s("%d", &new_node->medicine_count);
+
+	printf("약의 이름을 입력하세요\n");
+	for (int i = 0; i < new_node->medicine_count; ++i)
+	{
+		printf("약 %d: ", i + 1);
+		scanf_s("%49s", new_node->medicine_names[i], sizeof(new_node->medicine_names[i]));
+	}
+
+	// 이전 노드가 없는 경우 (즉, 찾은 노드가 헤드인 경우)
+	if (prev == NULL)
+	{
+		new_node->next = *head;
+		*head = new_node; // 헤드를 새로운 노드로 업데이트
+	}
+	else
+	{
+		// 이전 노드가 있는 경우
+		new_node->next = prev->next;
+		prev->next = new_node;
+	}
+}
 
 //10번
 
-//11번
+//11번 o
 void print_list(D_Node* head)
 {
 	D_Node* cur = head;
@@ -311,7 +443,15 @@ void print_list(D_Node* head)
 	}
 }
 
-//16번
+//12번
+
+//13번
+
+//14번
+
+//15번
+
+//16번 o
 void bubbleSort(D_Node** head) {
 	int swapped;
 	D_Node* cur;
@@ -365,8 +505,7 @@ void bubbleSort(D_Node** head) {
 
 //18번
 
-//19번
-//메모리 반납
+//19번 //메모리 반납 o
 void free_list(D_Node* head)
 {
 	D_Node* cur = head;
@@ -512,7 +651,11 @@ int main()
 		{
 			system("cls");
 			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			deleteSearchNode(&head);
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 			printf("현재 환자 명단 상태: ");
+			print_list(head);
 			printf("\n");
 		}
 
@@ -531,7 +674,11 @@ int main()
 		{
 			system("cls");
 			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			ModifyNode(&head);
+			system("cls");
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 			printf("현재 환자 명단 상태: ");
+			print_list(head);
 			printf("\n");
 		}
 
