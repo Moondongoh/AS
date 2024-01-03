@@ -17,24 +17,24 @@ typedef struct Node
 }D_Node;
 
 //함수 선언//
-void F_add_node(D_Node** head);						//1번 C
-void B_add_node(D_Node** head);						//2번 C
-void addBeforeNode(D_Node** head);                  //3번 C
-void addAfterNode(D_Node** head);					//4번 C
-void deleteFirstNode(D_Node** head);				//5번 C
-void deleteLastNode(D_Node** head);					//6번 C
-void deleteSearchNode(D_Node** head);				//7번 c
-void deleteALLNode(D_Node** head);					//8번 C
-void ModifyNode(D_Node** head);						//9번 c
-//10번
+void F_add_node(D_Node** head);						//1번  C
+void B_add_node(D_Node** head);						//2번  C
+void addBeforeNode(D_Node** head);                  //3번  C
+void addAfterNode(D_Node** head);					//4번  C
+void deleteFirstNode(D_Node** head);				//5번  C
+void deleteLastNode(D_Node** head);					//6번  C
+void deleteSearchNode(D_Node** head);				//7번  C
+void deleteALLNode(D_Node** head);					//8번  C
+void ModifyNode(D_Node** head);						//9번  C
+void PrintSearchNode(D_Node** head);				//10번 C
 void print_list(D_Node* head);						//11번 C
-//12번
-//13번
+void LinearSearch(D_Node** head);					//12번 C
+void MultipleLinearSearch(D_Node** head);			//13번 C
 //14번
 //15번
 void bubbleSort(D_Node** head);						//16번 C
 //17번
-//18번 끝
+//18번
 
 //함수//
 void cur(short x, short y)
@@ -423,7 +423,38 @@ void ModifyNode(D_Node** head)
 	}
 }
 
-//10번
+//10번 o
+void PrintSearchNode(D_Node** head)
+{
+	D_Node* cur = *head;
+	D_Node* prev = NULL;
+
+	printf("몇번 환자의 데이터를 확인하시겠습니까? : ");
+	int position3;
+	scanf_s("%d", &position3);
+
+	int count = 0;
+	while (cur != NULL && count < position3)
+	{
+		prev = cur;
+		cur = cur->next;
+		count++;
+
+	}
+
+	if (head != NULL)
+	{
+		printf("해당 번호 환자 정보: \n이름: %s\n나이: %d\n전화번호: %s\n주소: %s\n약의 갯수: %d\n약의 이름: ",
+			cur->name, cur->age, cur->phone, cur->address, cur->medicine_count);
+	}
+
+	if (cur == NULL)
+	{
+		// searchData와 일치하는 노드를 찾지 못한 경우
+		printf("일치하는 노드를 찾을 수 없습니다.\n");
+		return;
+	}
+}
 
 //11번 o
 void print_list(D_Node* head)
@@ -443,16 +474,59 @@ void print_list(D_Node* head)
 	}
 }
 
-//12번
+//12번 o
+void LinearSearch(D_Node** head)
+{
+	int count = 0;
+	D_Node* cur = *head;
+	char searchData[50];
+	printf("찾으실 환자 이름을 입력해주세요: ");
+	scanf_s("%49s", searchData, sizeof(searchData));
+	while (cur != NULL && strcmp(cur->name, searchData) != 0)
+	{
+		cur = cur->next;
+		count++;
+	}
+	if (cur == NULL)
+	{
+		printf("일치하는 노드를 찾을 수 없습니다.\n");
+	}
+	else
+	{
+		printf("%s 환자의 위치는: %d\n", searchData, count);
+	}
+}
 
-//13번
+//13번 o
+void MultipleLinearSearch(D_Node** head)
+{
+	int count = 0;
+	D_Node* cur = *head;
+	char searchData[50];
+	printf("찾으실 환자 이름을 입력해주세요: ");
+	scanf_s("%49s", searchData, sizeof(searchData));
+	while (cur != NULL)
+	{
+		if (strcmp(cur->name, searchData) == 0)
+		{
+			printf("%s 환자의 위치는: %d\n", searchData, count);
+		}
+		cur = cur->next;
+		count++;
+	}
+	if (count == 0)
+	{
+		printf("일치하는 노드를 찾을 수 없습니다.\n");
+	}
+}
 
 //14번
 
 //15번
 
 //16번 o
-void bubbleSort(D_Node** head) {
+void bubbleSort(D_Node** head) 
+{
 	int swapped;
 	D_Node* cur;
 	D_Node* last = NULL;
@@ -686,7 +760,7 @@ int main()
 		{
 			system("cls");
 			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-			printf("현재 환자 명단 상태: ");
+			PrintSearchNode(&head);
 			printf("\n");
 		}
 
@@ -703,7 +777,7 @@ int main()
 		{
 			system("cls");
 			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-			printf("현재 환자 명단 상태: ");
+			LinearSearch(&head);
 			printf("\n");
 		}
 
@@ -711,7 +785,7 @@ int main()
 		{
 			system("cls");
 			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-			printf("현재 환자 명단 상태: ");
+			MultipleLinearSearch(&head);
 			printf("\n");
 		}
 
