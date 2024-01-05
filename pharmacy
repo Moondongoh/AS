@@ -30,8 +30,8 @@ void PrintSearchNode(D_Node** head);				//10번 C
 void print_list(D_Node* head);						//11번 C
 void LinearSearch(D_Node** head);					//12번 C
 void MultipleLinearSearch(D_Node** head);			//13번 C
-//14번
-//15번
+void binarySearch(D_Node** head);					//14번 C
+void multipleBinarySearch(D_Node** head);			//15번 C
 void bubbleSort(D_Node** head);						//16번 C
 //17번
 //18번
@@ -520,9 +520,129 @@ void MultipleLinearSearch(D_Node** head)
 	}
 }
 
-//14번
+//14번 o 1부터 시작
+void binarySearch(D_Node** head)
+{
+	bubbleSort(head);
+	printf("정렬이 완료 되었습니다.\n");
 
-//15번
+	int count = 0;  // 노드 수 셀 변수
+	int position = -1;
+
+	char searchData[50];
+	printf("찾으실 환자 이름을 입력해주세요: ");
+	scanf_s("%49s", searchData, sizeof(searchData));
+
+	// 리스트의 노드 수 계산
+	D_Node* temp = *head;
+	while (temp != NULL) {
+		count++;
+		temp = temp->next;
+	}
+
+	// 노드의 데이터가 searchData와 일치하는 노드를 찾음
+	int low = 0;
+	int high = count - 1;
+
+	while (low <= high) {
+		int mid = (low + high) / 2;
+
+		D_Node* cur = *head;
+		for (int i = 0; i < mid; i++) {
+			cur = cur->next;
+		}
+
+		if (strcmp(cur->name, searchData) == 0) {
+			position = mid;
+			break;
+		}
+		else if (strcmp(cur->name, searchData) < 0) {
+			low = mid + 1;
+		}
+		else {
+			high = mid - 1;
+		}
+	}
+
+	if (position != -1) {
+		printf("%s 환자의 순서는: %d번 입니다.\n", searchData, position + 1);
+	}
+	else {
+		// searchData와 일치하는 노드를 찾지 못한 경우
+		printf("일치하는 노드를 찾을 수 없습니다.\n");
+	}
+}
+
+//15번 o
+void multipleBinarySearch(D_Node** head)
+{
+	bubbleSort(head);
+	printf("정렬이 완료 되었습니다.\n");
+
+	int count = 0;  // 노드 수 셀 변수
+	int position = -1;
+
+	char searchData[50];
+	printf("찾으실 환자 이름을 입력해주세요: ");
+	scanf_s("%49s", searchData, sizeof(searchData));
+
+	// 리스트의 노드 수 계산
+	D_Node* temp = *head;
+	while (temp != NULL) {
+		count++;
+		temp = temp->next;
+	}
+
+	// 노드의 데이터가 searchData와 일치하는 노드를 찾음
+	int low = 0;
+	int high = count - 1;
+
+	while (low <= high) {
+		int mid = (low + high) / 2;
+
+		D_Node* cur = *head;
+		for (int i = 0; i < mid; i++) {
+			cur = cur->next;
+		}
+		//-----------------------
+
+		if (strcmp(cur->name, searchData) == 0) {
+			position = mid;
+			printf("%s 값의 노드 위치는: %d\n", searchData, position + 1);
+			///////////////////////////////////////
+			// 왼쪽으로 이동하며 출력
+			int left = position - 1;
+			D_Node* leftNode = head;
+			while (left >= 0 && strcmp(leftNode->name, searchData)==0) {
+				printf("%s 값의 노드 위치는: %d\n", searchData, left + 1);
+				left--;
+				leftNode = leftNode->next;
+			}
+
+			// 오른쪽으로 이동하며 출력
+			int right = position + 1;
+			D_Node* rightNode = cur->next; // 현재 위치에서의 다음 노드부터 시작
+			while (right < count && strcmp(rightNode->name, searchData)==0) {
+				printf("%s 값의 노드 위치는: %d\n", searchData, right + 1);
+				right++;
+				rightNode = rightNode->next;
+			}
+
+			return;  // 찾은 후에는 더 이상 진행하지 않음
+		}
+
+		else if (cur->name < searchData) {
+			low = mid + 1;
+		}
+		else {
+			high = mid - 1;
+		}
+	}
+
+	// searchData와 일치하는 노드를 찾지 못한 경우
+	printf("일치하는 노드를 찾을 수 없습니다.\n");
+}
+
 
 //16번 o
 void bubbleSort(D_Node** head) 
@@ -793,7 +913,7 @@ int main()
 		{
 			system("cls");
 			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-			printf("현재 환자 명단 상태: ");
+			binarySearch(&head);
 			printf("\n");
 		}
 
@@ -801,6 +921,7 @@ int main()
 		{
 			system("cls");
 			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+			multipleBinarySearch(&head);
 			printf("현재 환자 명단 상태: ");
 			printf("\n");
 		}
