@@ -1,0 +1,102 @@
+#define _CRT_SECURE_NO_WARNINGS 
+#include<stdio.h>
+#include<windows.h>
+#include<stdlib.h>
+
+int main()
+{
+    FILE* fp;
+    int max = 0;        //입금
+    int min = 0;        //수출
+    int balance = 0;    //잔액
+    int choice = 0;     //선택사항
+    int i = 0;          // 반복문을 돌리기 위해서
+    char assets[15];
+    char income[15];
+    char expense[15];
+
+    fp = fopen("list.txt", "w"); //시작과 동시에 list.txt 파일이 생성된다.
+
+    printf("======가계부=======\n");
+    printf("입력하신 내역을 적어주세요.: ");
+    scanf("%s", &assets);
+    printf("현재 자산을 입력해주세요.: ");  //현재자산을 입력받는다.
+    scanf("%d", &balance);
+    printf("처리 되었습니다.\n");
+    fprintf(fp, "\n 내역 : %s\n 현재 자산 : %d 원\n", assets, balance);  //현재 자산을 list.txt 파일에 입력한다.
+
+    while (1)
+    {
+        if (balance == 0)  //입력받은 자산이 0을 입력시 종료하게 만들었다.
+
+        {
+            break;
+        }
+
+        printf("\n기능 선택 (1.입금 2.지출 3.잔액 조회 4.종료) : ");
+        scanf("%d", &choice);
+
+        if (choice == 1)  //입금을 선택할시
+        {
+            i = 0;
+            printf("입금 내역을 적어주세요.: ");
+            scanf("%s", &income);
+            printf("입금 금액 : ");
+            scanf("%d", &max);
+            balance = balance + max;
+            for (i; i < 4;i++)
+            {
+                printf("->");
+                Sleep(1000);
+            }
+            fprintf(fp, "\n 입금 내역 : %s\n 입금 금액 : %d 원\n",income, balance);
+            printf("\n%d\n", balance);
+            printf("처리 되었습니다.\n");
+        }
+
+        if (choice == 2) // 지출을 선택시
+        {
+            i = 0;
+            printf("지출 내역을 적어주세요.: ");
+            scanf("%s", &expense);
+            printf("지출  금액 : ");
+            scanf("%d", &min);
+            balance = balance - min;
+            for (i; i < 4;i++)
+            {
+                printf("->");
+                Sleep(1000);
+            }
+            fprintf(fp, "\n 지출 내역 : %s\n 지출 금액 : %d 원\n",expense, balance);  //금액을 list.txt 파일에 출력
+            printf("\n%d\n", balance);   //금액을 화면에 출력
+            printf("처리 되었습니다.\n");
+        }
+
+        if (choice == 3) //잔액조회 선택시
+        {
+            i = 0;
+            for (i; i < 4;i++)
+            {
+                printf("->");
+                Sleep(1000);
+            }
+            printf("\n 잔액 조회 : %d\n", balance);//금액을 화면에  출력
+            fprintf(fp, "\n 잔액 조회 : %d 원\n", balance); //금액을 list.txt 파일에 출력
+            printf("처리 되었습니다.\n");
+        }
+
+        if (choice == 4) //종료를 선택시
+        {
+            printf("프로그램을 종료 합니다 \n");
+            printf("처리 되었습니다.\n");
+            fclose(fp);
+            break;
+        }
+
+        if (!(choice == 1 || choice == 2 || choice == 3 || choice == 4)) //예외처리
+        {
+            break;
+        }
+    }
+    return 0;
+}
