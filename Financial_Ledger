@@ -36,7 +36,7 @@ int main()
         printf("\n기능 선택 (1.입금 2.지출 3.잔액 조회 4.종료) : ");
         scanf("%d", &choice);
 
-        if (choice == 1)  //입금을 선택할시
+        if (choice == 1)  //입금내역
         {
             i = 0;
             printf("입금 내역을 적어주세요.: ");
@@ -54,7 +54,7 @@ int main()
             printf("처리 되었습니다.\n");
         }
 
-        if (choice == 2) // 지출을 선택시
+        if (choice == 2) // 지출내역
         {
             i = 0;
             printf("지출 내역을 적어주세요.: ");
