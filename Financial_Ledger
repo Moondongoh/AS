@@ -1,102 +1,252 @@
-#define _CRT_SECURE_NO_WARNINGS 
-#include<stdio.h>
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include<windows.h>
-#include<stdlib.h>
+#include<limits.h>
+
+FILE* fp;
+long long max = 0;        // 입금
+long long min = 0;        // 출금
+long long balance = 0;    // 잔액
+int i = 0;
+long long Limit_min = INT_MIN;
+long long Limit_max = INT_MAX;
+
+void plus();
+void minus();
+void print();
+void N_time();
+
+void cur(short x, short y)
+{
+    COORD pos = { x, y };
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+
+void plus()
+{
+        i = 0;
+        char income[15];
+        char str[100];
+        time_t timer;
+        struct tm* t;
+        timer = time(NULL);
+        t = localtime(&timer);
+        printf("입금 내역을 적어주세요: ");
+        scanf_s("%s", &income, 15);
+        while (1)
+        {
+            printf("입금 금액: ");
+            if (scanf("%lld", &max) != 1)
+            {
+                printf("잘못된 값을 입력 했습니다\n");
+                while (getchar() != '\n');
+                continue;
+            }
+            else if (max < Limit_min)
+            {
+                printf("언더 플로우가 발생하였습니다. 다시 입력해주세요.\n");
+                while (getchar() != '\n');
+                continue;
+            }
+            else if (max > Limit_max)
+            {
+                printf("오버 플로우가 발생하였습니다. 다시 입력해주세요.\n");
+                while (getchar() != '\n');
+                continue;
+            }
+            itoa(max, str, 10);
+            addCommas(str);
+            balance += max;
+            printf("거래 중입니다.");
+            for (i; i < 3;i++)
+            {
+                printf("->");
+                Sleep(800);
+            }
+            printf("거래 완료!");
+            fprintf(fp, "\n입금 내역: %s\n입금 금액: %s 원\n거래시간: %d년 %d월 %d일 %d시 %d분 %d초\n", income, str, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+                t->tm_hour, t->tm_min, t->tm_sec);
+            printf("\n잔액: %d\n", balance);
+            printf("처리되었습니다.\n");
+            N_time();
+            break;
+        }
+}
+
+void minus()
+{
+        i = 0;
+        char expense[15];
+        time_t timer;
+        struct tm* t;
+        timer = time(NULL);
+        t = localtime(&timer);
+        printf("지출 내역을 적어주세요: ");
+        scanf_s("%s", &expense, 15);
+        while (1)
+        {
+            printf("지출 금액: ");
+            if (scanf("%lld", &min) != 1)
+            {
+                printf("잘못된 값을 입력 했습니다\n");
+                while (getchar() != '\n');
+                continue;
+            }
+            else if (min < Limit_min)
+            {
+                printf("언더 플로우가 발생하였습니다. 다시 입력해주세요.\n");
+                while (getchar() != '\n');
+                continue;
+            }
+            else if (min > Limit_max)
+            {
+                printf("오버 플로우가 발생하였습니다. 다시 입력해주세요.\n");
+                while (getchar() != '\n');
+                continue;
+            }
+            balance -= min;
+            printf("거래 중입니다.");
+            for (i; i < 3;i++)
+            {
+                printf("->");
+                Sleep(800);
+            }
+            printf("거래 완료!");
+            fprintf(fp, "\n지출 내역: %s\n지출 금액: %d 원\n거래시간: %d년 %d월 %d일 %d시 %d분 %d초\n", expense, min, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+                t->tm_hour, t->tm_min, t->tm_sec);
+            printf("\n잔액: %d\n", balance);
+            printf("처리되었습니다.\n");
+            N_time();
+            break;
+        }
+
+}
+
+void print()
+{
+        i = 0;
+        time_t timer;
+        struct tm* t;
+        timer = time(NULL);
+        t = localtime(&timer);
+        printf("출력 중입니다.");
+        for (i; i < 3;i++)
+        {
+            printf("->");
+            Sleep(800);
+        }
+        printf("출력 완료!");
+        printf("\n잔액 조회: %d\n", balance);
+        fprintf(fp, "\n잔액 조회: %d 원\n거래시간: %d년 %d월 %d일 %d시 %d분 %d초\n", balance, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+            t->tm_hour, t->tm_min, t->tm_sec);
+        printf("처리되었습니다.\n");
+        N_time();
+}
+
+void N_time()
+{
+    time_t timer;
+    struct tm* t;
+    timer = time(NULL);
+    t = localtime(&timer);
+    printf("거래 시간: %d년 %d월 %d일 %d시 %d분 %d초\n",
+        t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+        t->tm_hour, t->tm_min, t->tm_sec);
+}
 
 int main()
 {
-    FILE* fp;
-    int max = 0;        //입금
-    int min = 0;        //수출
-    int balance = 0;    //잔액
-    int choice = 0;     //선택사항
-    int i = 0;          // 반복문을 돌리기 위해서
+    printf("MIN : %d\n", Limit_min);
+    printf("MAX : %d\n", Limit_max);
+
     char assets[15];
-    char income[15];
-    char expense[15];
+    COORD pos = { 0,0 };	//커서 위치
+    fp = fopen("list.txt", "w");
+    if (fp == NULL) {
+        printf("파일을 열 수 없습니다.\n");
+        return 1;
+    }
 
-    fp = fopen("list.txt", "w"); //시작과 동시에 list.txt 파일이 생성된다.
-
-    printf("======가계부=======\n");
-    printf("입력하신 내역을 적어주세요.: ");
-    scanf("%s", &assets);
-    printf("현재 자산을 입력해주세요.: ");  //현재자산을 입력받는다.
-    scanf("%d", &balance);
-    printf("처리 되었습니다.\n");
-    fprintf(fp, "\n 내역 : %s\n 현재 자산 : %d 원\n", assets, balance);  //현재 자산을 list.txt 파일에 입력한다.
+    printf("====== 가계부 =======\n");
+    printf("입력하신 내역을 적어주세요: ");
+    scanf_s("%s", &assets, 15);
+    while (1)
+    {
+        printf("현재 자산을 입력해주세요: ");
+        if (scanf("%lld", &balance) != 1)
+        {
+            printf("잘못된 값을 입력 했습니다\n");
+            while (getchar() != '\n');
+            continue;
+        }
+        else if (balance < Limit_min)
+        {
+            printf("언더 플로우가 발생하였습니다. 다시 입력해주세요.\n");
+            while (getchar() != '\n');
+            continue;
+        }
+        else if (balance > Limit_max)
+        {
+            printf("오버 플로우가 발생하였습니다. 다시 입력해주세요.\n");
+            while (getchar() != '\n');
+            continue;
+        }
+        break;
+    }
+    fprintf(fp, "내역: %s\n현재 자산: %d 원\n", assets, balance);
 
     while (1)
     {
-        if (balance == 0)  //입력받은 자산이 0을 입력시 종료하게 만들었다.
-
+        int choice;
+        while (1)
         {
+            printf("\n기능 선택 (1. 입금 2. 지출 3. 잔액 조회 4. 종료): ");
+            if (scanf("%d", &choice) != 1)
+            {
+                system("cls");
+                SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+                printf("잘못된 값을 입력 했습니다.\n");
+                printf("이용하실 서비스를 선택해주세요.\n");
+                while (getchar() != '\n');
+                continue;
+            }
             break;
         }
 
-        printf("\n기능 선택 (1.입금 2.지출 3.잔액 조회 4.종료) : ");
-        scanf("%d", &choice);
-
-        if (choice == 1)  //입금을 선택할시
+        switch (choice)
         {
-            i = 0;
-            printf("입금 내역을 적어주세요.: ");
-            scanf("%s", &income);
-            printf("입금 금액 : ");
-            scanf("%d", &max);
-            balance = balance + max;
-            for (i; i < 4;i++)
-            {
-                printf("->");
-                Sleep(1000);
-            }
-            fprintf(fp, "\n 입금 내역 : %s\n 입금 금액 : %d 원\n",income, balance);
-            printf("\n%d\n", balance);
-            printf("처리 되었습니다.\n");
-        }
-
-        if (choice == 2) // 지출을 선택시
-        {
-            i = 0;
-            printf("지출 내역을 적어주세요.: ");
-            scanf("%s", &expense);
-            printf("지출  금액 : ");
-            scanf("%d", &min);
-            balance = balance - min;
-            for (i; i < 4;i++)
-            {
-                printf("->");
-                Sleep(1000);
-            }
-            fprintf(fp, "\n 지출 내역 : %s\n 지출 금액 : %d 원\n",expense, balance);  //금액을 list.txt 파일에 출력
-            printf("\n%d\n", balance);   //금액을 화면에 출력
-            printf("처리 되었습니다.\n");
-        }
-
-        if (choice == 3) //잔액조회 선택시
-        {
-            i = 0;
-            for (i; i < 4;i++)
-            {
-                printf("->");
-                Sleep(1000);
-            }
-            printf("\n 잔액 조회 : %d\n", balance);//금액을 화면에  출력
-            fprintf(fp, "\n 잔액 조회 : %d 원\n", balance); //금액을 list.txt 파일에 출력
-            printf("처리 되었습니다.\n");
-        }
-
-        if (choice == 4) //종료를 선택시
-        {
-            printf("프로그램을 종료 합니다 \n");
-            printf("처리 되었습니다.\n");
+        case 1:
+            system("cls");
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+            plus();
+            break;
+        case 2:
+            system("cls");
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+            minus();
+            break;
+        case 3:
+            system("cls");
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+            print();
+            break;
+        case 4:
+            system("cls");
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+            printf("프로그램을 종료합니다.\n");
+            printf("이용해 주셔서 감사합니다.\n");
             fclose(fp);
-            break;
-        }
-
-        if (!(choice == 1 || choice == 2 || choice == 3 || choice == 4)) //예외처리
-        {
+            return 0;
+        default:
+            system("cls");
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+            printf("올바른 기능을 선택해주세요.\n");
             break;
         }
     }
+
+    fclose(fp);
     return 0;
 }
