@@ -12,8 +12,8 @@ long long min = 0;        // 출금
 long long balance = 0;    // 잔액
 long long balance2 = 0;
 int i = 0;
-long long Limit_min = LLONG_MIN;
-long long Limit_max = LLONG_MAX;
+int Limit_min = INT_MIN;
+int Limit_max = INT_MAX;
 char str[100];
 char str2[100];
 char str3[100];
@@ -22,6 +22,8 @@ char str5[100];
 long long Sum_income = 0;
 long long Sum_expense = 0;
 
+void addCommas(char *str);
+void cur(short x, short y);
 void plus();
 void minus();
 void fixed();
@@ -172,10 +174,10 @@ void minus()
 
 void fixed()
 {
-    int F_income = 0;
+    long long F_income = 0;
     int F_income_C = 0;
     char F_income_N[100];
-    int F_expense = 0;
+    long long F_expense = 0;
     int F_expense_C = 0;
     char F_expense_N[100];
     while (1)
@@ -199,16 +201,17 @@ void fixed()
         switch (F_choice)
         {
         case 1:
+            fprintf(fp, "===================고정 수입===================\n");
             while (1)
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
                 printf("입력하실 고정 수입 내역을 입력해주세요:");
                 scanf("%s", &F_income_N);
-                printf("고정 수입의 금액을 입력해주세요: ");
                 while (1)
                 {
-                    if (scanf("%d", &F_income) != 1)
+                    printf("고정 수입의 금액을 입력해주세요: ");
+                    if (scanf("%lld", &F_income) != 1)
                     {
                         system("cls");
                         SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
@@ -240,14 +243,20 @@ void fixed()
                 switch (F_income_C)
                 {
                 case 1:
-                    fprintf(fp, "===================고정 수입===================\n내역: %s\n금액: %s원\n", F_income_N, str3);
+                    system("cls");
+                    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+                    fprintf(fp, "내역: %s\n금액: %s원\n", F_income_N, str3);
                     continue;
                 case 2:
+                    system("cls");
+                    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
                     itoa(Sum_income, str4, 10);
                     addCommas(str4); // 쉼표를 추가하여 형식화
-                    fprintf(fp, "\n내역: %s\n금액: %s원\n총 고정 수입 금액: %s원\n", F_income_N, str3, str4);
+                    fprintf(fp, "내역: %s\n금액: %s원\n총 고정 수입 금액: %s원\n", F_income_N, str3, str4);
                     break;
                 dafault:
+                    system("cls");
+                    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
                     printf("1,2,3중에서 선택해주세요.");
                     continue;
                 }
@@ -255,16 +264,17 @@ void fixed()
             }
             break;
         case 2:
+            fprintf(fp, "===================고정 지출===================\n");
             while (1)
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
                 printf("입력하실 고정 지출 내역을 입력해주세요:");
                 scanf("%s", &F_expense_N);
-                printf("고정 지출의 금액을 입력해주세요: ");
                 while (1)
                 {
-                    if (scanf("%d", &F_expense) != 1)
+                    printf("고정 지출의 금액을 입력해주세요: ");
+                    if (scanf("%lld", &F_expense) != 1)
                     {
                         system("cls");
                         SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
@@ -296,14 +306,20 @@ void fixed()
                 switch (F_expense_C)
                 {
                 case 1:
-                    fprintf(fp, "===================고정 지출===================\n내역: %s\n금액: %s원\n", F_expense_N, str3);
+                    system("cls");
+                    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+                    fprintf(fp, "내역: %s\n금액: %s원\n", F_expense_N, str3);
                     continue;
                 case 2:
+                    system("cls");
+                    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
                     itoa(Sum_expense, str4, 10);
                     addCommas(str4); // 쉼표를 추가하여 형식화
-                    fprintf(fp, "\n내역: %s\n금액: %d원\n총 고정 지출 금액: %s원\n", F_expense_N, F_expense, str4);
+                    fprintf(fp, "내역: %s\n금액: %d원\n총 고정 지출 금액: %s원\n", F_expense_N, F_expense, str4);
                     break;
                 default:
+                    system("cls");
+                    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
                     printf("1,2,3 중에서 선택해주세요.\n");
                     continue;  // 다시 입력 요구
                 }
@@ -311,8 +327,12 @@ void fixed()
             }
             break;
         case 3:
+            system("cls");
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
             break;
         default:
+            system("cls");
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
             printf("1,2,3중에서 선택해주세요.");
             break;
         }
@@ -359,12 +379,13 @@ void N_time()
 
 int main()
 {
-    printf("MIN : %lld\n", Limit_min);
-    printf("MAX : %lld\n", Limit_max);
+    printf("MIN : %d\n", Limit_min);
+    printf("MAX : %d\n", Limit_max);
 
     char assets[15];
     fp = fopen("list.txt", "w");
-    if (fp == NULL) {
+    if (fp == NULL) 
+    {
         printf("파일을 열 수 없습니다.\n");
         return 1;
     }
@@ -402,7 +423,7 @@ int main()
     addCommas(str5); // 쉼표를 추가하여 형식화
     itoa(balance2, str2, 10);
     addCommas(str2); // 쉼표를 추가하여 형식화
-    fprintf(fp, "====================가계부====================\n내역: %s\n현재 자산: %d원\n고정 수입 지출 계산 후 자산: %s원\n", assets,balance, str2);
+    fprintf(fp, "====================가계부====================\n내역: %s\n현재 자산: %s원\n고정 수입 지출 계산 후 자산: %s원\n", assets, str5, str2);
 
     while (1)
     {
