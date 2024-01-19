@@ -51,9 +51,9 @@ int main()
     balance2 = balance;
     balance2 = balance2 + Sum_income - Sum_expense;
     itoa(balance, str5, 10);
-    addCommas(str5); // 쉼표를 추가하여 형식화
+    addCommas(str5); // 쉼표를 추가하여 형식화 실행
     itoa(balance2, str2, 10);
-    addCommas(str2); // 쉼표를 추가하여 형식화
+    addCommas(str2); // 쉼표를 추가하여 형식화 실행
     fprintf(fp, "====================가계부====================\n내역: %s\n현재 자산: %s원\n고정 수입 지출 계산 후 자산: %s원\n", assets, str5, str2);
 
     while (1)
