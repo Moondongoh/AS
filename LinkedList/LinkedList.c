@@ -1,5 +1,5 @@
 #include<stdlib.h>
-#include "func.h"
+#include "LinkedList.h"
 
 /*
 * 

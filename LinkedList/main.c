@@ -3,7 +3,7 @@
 #include<stdlib.h>
 #include<windows.h>
 #include<limits.h>
-#include"func.h"
+#include"LinkedList.h"
 
 void cur(short x, short y)		
 {
