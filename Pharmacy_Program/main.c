@@ -3,8 +3,8 @@
 #include<stdlib.h>
 #include<string.h>
 #include<windows.h>
-#include"Fun_Def.h"
-#include"Node.h"
+#include "Fun_Def.h"
+#include "Node.h"
 
 //메인//
 
