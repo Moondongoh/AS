@@ -1,4 +1,3 @@
-#pragma once
 //노드 정의//
 typedef struct Node
 {

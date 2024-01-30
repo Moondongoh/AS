@@ -1,5 +1,5 @@
-#ifndef _LinkedList_H_
-#define _LinkedList_H_
+#ifndef _FUN_DEF_H_
+#define _FUN_DEF_H_
 #include <stdio.h>
 #include"Node.h"
 
@@ -947,4 +947,5 @@ void free_list(D_Node* head)
 		cur = next_node;
 	}
 }
-#endif951
+
+#endif
