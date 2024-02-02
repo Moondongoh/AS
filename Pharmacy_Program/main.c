@@ -51,6 +51,7 @@ int main()
 			printf("\n");
 			break;
 		}
+		
 		switch (C_num)
 		{
 
