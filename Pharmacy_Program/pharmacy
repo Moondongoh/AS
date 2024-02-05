@@ -369,7 +369,6 @@ void ModifyNode(D_Node** head)
 		*head = (*head)->next;
 		free(temp);
 	}
-	
 	else
 	{
 		// 찾은 노드를 삭제
