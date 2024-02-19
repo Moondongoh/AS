@@ -8,7 +8,7 @@
 #include "fun.h"
 #pragma warning(disable:4996)
 
-void cur(short x, short y)
+void cur(short x, short y) //화면 초기화 시 사용 될 좌표 값
 {
     COORD pos = { x, y };
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
