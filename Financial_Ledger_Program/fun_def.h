@@ -14,7 +14,7 @@ void cur(short x, short y) //화면 초기화 시 사용 될 좌표 값
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }
 
-void addCommas(char* str)
+void addCommas(char* str) // 0을 3개씩 끊어서 ,를 추가하는 함수
 {
     int len = strlen(str);
     int numCommas = (len - 1) / 3;
