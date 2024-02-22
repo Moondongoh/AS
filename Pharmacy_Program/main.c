@@ -56,6 +56,7 @@ int main()
 		{
 
 		case 1:
+			// 앞 노드 추가
 			F_add_node(&head);
 			printf("\n");
 			break;
