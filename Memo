@@ -1,3 +1,5 @@
+// 윈도우 api를 이용해 메모장 만들기 프로젝트
+
 #include <stdlib.h>
 #include <tchar.h>
 #include <windows.h>
