@@ -1,10 +1,28 @@
 // 윈도우 api를 이용해 메모장 만들기 프로젝트
 
 /*
+1. 영어 및 한글을 입력 받을 수 있어야함.
+2. Home, End, Ins, Del, Page up,down기능
+3. 메모장 툴바 제작 >> 파일, 편집, 서식
+   -각 메뉴에 기능들 추가 (새로 만들기, 새창 등등...)
+4. Accelerator(단축키)추가
+5. 저장 및 열기 기능
+6. 동적할당으로 메모리 배정
+7. 각 함수의 이해 및 기본으로 사용 할 수 있는 기능 파악
+*/
+
+/*충격 사실 에디터 컨트롤을 사용하면 대강 텍스트 입력 후 Home, End, Insert, Delete, Page Up, Page Down 기능을 사용 할 수 있다.
+하지만 일단은 에디터 컨트롤을 이용해서 텍스트는 입력을 받고 뒷 기능들을 내가 직접 추가해서 사용 할 수 있도록 하기로함.
+*/
+
+/*
 
 2월 26일 메모장 리소스 파일 생성 툴바 제작 -파일(F)칸 생성 
 		 수평, 수직 스크롤바 생성
 		 새로 만들기 및 새창 생성
+2월 27일 편집(E), 서식(O)칸 생성 및 단축키 추가
+		 단축키 설정 못함
+		 실행창 크기에 따라 스크롤바 수정하도록
 
 */
 #include <stdlib.h>
@@ -21,8 +39,8 @@
 #define ID_FILE_새_창(W)				40010
 #define ID_FILE_열기(O)					40011
 #define ID_FILE_저장(S)					40012
-#define ID_FILE_다른 이름으로 저장(A)	40013
-#define ID_FILE_끝내기(X)				40014
+#define ID_FILE_다른 이름으로 저장(A)   40013
+#define ID_FILE_끝내기(X)               40014
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
