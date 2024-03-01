@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <imm.h>
-#include "head.h" // 리소스 헤더 포함
+#include "head.h" // 리소스 헤더 파일 포함
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
