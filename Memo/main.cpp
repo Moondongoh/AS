@@ -17,7 +17,17 @@
 ㅗ 새 창 열기 후 새 창을 닫고 기존 창으로 넘어가면 새 창의 데이터가 남음
 ㅗ 메세지 창 처리 안함
 ㅗ 캐럿이 아직도 병50임 영어만 쓰면 맞는데 여기다 띄어쓰기랑 한글 이런거 더하면 캐럿이 문장의 끝을 못따라감.
+  >> 글꼴 수정으로 영문의 폭은 찾아서 해결함 (띄어쓰기 포함) but 한글은 아직 안됌.
 ㅗ 열기로 파일을 열고 해당 파일 데이터 수정이 불가 ㅅㅂ
+*/
+
+/* 구현 완료
+1. 한글과 영어 입력가능
+2. 메뉴바 생성과 기능들 내역 출력 가능
+새로 만들기, 새 창 열기, 저장 및 열기 가능
+3. 캐럿 출력 (영어는 고정폭을 갖는 글꼴을 찾아서 캐럿의 위치가 맞지만 한글은 맞지 않음)
+4. HOME, END, DELETE BACK SPACE, ENTER, TAB 방향키키 먹음 INSERT와 PAGE UP, DOWN 안됌
+5.스크롤바 출력 가능 (구현은 안됌)
 */
 #include <windows.h>
 #include <stdio.h>
@@ -160,26 +170,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 
                 case ID_FILE_NEW_WINDOW:
                     // 새 창 열기
-                    CreateNewMemoWindow(hInst);
+                    CreateNewMemoWindow(hInst); 
                     break;
 
 				case ID_FILE_SAVE:
 					{
-						OPENFILENAME ofn;
+						OPENFILENAME save;
 						WCHAR szFileName[MAX_PATH] = L"";
 
-						ZeroMemory(&ofn, sizeof(ofn));
+						ZeroMemory(&save, sizeof(save));
     
-						ofn.lStructSize = sizeof(ofn);
-						ofn.hwndOwner = hWnd;
-						ofn.lpstrFilter = L"텍스트 파일 (*.txt)\0*.TXT\0모든 파일 (*.*)\0*.*\0";
-						ofn.lpstrFile = szFileName;
-						ofn.lpstrFile[0] = L'\0';    
-						ofn.nMaxFile = sizeof(szFileName) / sizeof(*szFileName);
-						ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+						save.lStructSize = sizeof(save);
+						save.hwndOwner = hWnd;
+						save.lpstrFilter = L"텍스트 파일 (*.txt)\0*.TXT\0모든 파일 (*.*)\0*.*\0";
+						save.lpstrFile = szFileName;
+						save.lpstrFile[0] = L'\0';    
+						save.nMaxFile = sizeof(szFileName) / sizeof(*szFileName);
+						save.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
     
-						if (GetSaveFileName(&ofn) == TRUE) {
-							FILE* file = _wfopen(ofn.lpstrFile, L"w"); // 파일 열기
+						if (GetSaveFileName(&save) == TRUE) {
+							FILE* file = _wfopen(save.lpstrFile, L"w"); // 파일 열기
 							if (file != NULL) {
 								// 모든 행에 대해 파일에 쓰기
 								for (int i = 0; i < textRows; ++i) {
@@ -193,20 +203,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 
 				case ID_FILE_OPEN:
 					{
-						OPENFILENAME ofn;
+						OPENFILENAME ofen;
 						WCHAR szFileName[MAX_PATH] = L"";
 
-						ZeroMemory(&ofn, sizeof(ofn));
-						ofn.lStructSize = sizeof(ofn);
-						ofn.hwndOwner = hWnd;
-						ofn.lpstrFilter = L"텍스트 파일 (*.txt)\0*.TXT\0모든 파일 (*.*)\0*.*\0";
-						ofn.lpstrFile = szFileName;
-						ofn.lpstrFile[0] = L'\0';
-						ofn.nMaxFile = sizeof(szFileName) / sizeof(*szFileName);
-						ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+						ZeroMemory(&ofen, sizeof(ofen));
+						ofen.lStructSize = sizeof(ofen);
+						ofen.hwndOwner = hWnd;
+						ofen.lpstrFilter = L"텍스트 파일 (*.txt)\0*.TXT\0모든 파일 (*.*)\0*.*\0";
+						ofen.lpstrFile = szFileName;
+						ofen.lpstrFile[0] = L'\0';
+						ofen.nMaxFile = sizeof(szFileName) / sizeof(*szFileName);
+						ofen.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-						if (GetOpenFileName(&ofn) == TRUE) {
-							FILE* file = _wfopen(ofn.lpstrFile, L"r"); // 파일 열기
+						if (GetOpenFileName(&ofen) == TRUE) {
+							FILE* file = _wfopen(ofen.lpstrFile, L"r"); // 파일 열기
 							if (file != NULL) {
 								// 텍스트를 저장할 임시 버퍼 할당
 								WCHAR tempBuffer[MAX_COLUMNS];
@@ -414,6 +424,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			textBuffer[caretRow][textColumns] = '\0';
     
 			SetCaretPos(8 * caretColumn, TEXT_HEIGHT * caretRow);
+
 			InvalidateRect(hWnd, NULL, TRUE);
 			break;
 
@@ -424,10 +435,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             SetTextColor(hdc, RGB(0, 0, 0));
             SetBkColor(hdc, RGB(255, 255, 255));
 
+			HFONT hFont = CreateFont(17, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                          CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, TEXT("Courier New"));
+			HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
+			//FF_MODERN는 고정폭 글꼴을 의미하는 플래그이며, Courier New는 고정폭 글꼴의 한 코드임.
+			//문제점 Courier New << 이친구는 영문만 고정폭 지원
+
             // 모든 텍스트를 출력
             for (int i = 0; i < textRows; ++i) {
                 TextOut(hdc, 0, TEXT_HEIGHT * i, textBuffer[i], wcslen(textBuffer[i]));
             }
+			SelectObject(hdc, hOldFont);
+			DeleteObject(hFont);
 
             EndPaint(hWnd, &ps);
             break;
@@ -442,3 +461,4 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     }
     return 0;
 }
+
