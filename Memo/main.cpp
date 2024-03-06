@@ -22,6 +22,14 @@ SetScrollRange(hWnd, SB_HORZ, 0, MAX_COLUMNS - 1, TRUE);
 ㅗ 열기로 파일을 열고 해당 파일 데이터 수정이 불가 ㅅㅂ
 ㅗ 스크롤 기능을 열을 한칸씩 이동하는거롤 수정해볼법함
 행이 가로 열이 세로
+
+텍스트를 입력 받는 배열을 미리 생성한다면?
+최대 크기의 배열을 생성해서 이용
+첫번째 줄 초기화가 안된거여서?
+지금 현재 무슨 일이냐 내가 개행하는게 줄 바꿈을 배열 자체를 복사를 해서 엔터를 하는데
+엔터를 치고 돌아가게 되면 되는 이유는 이미 할당이 되기 때문에 글자가 보이는 것 같음
+그냥 엔터 치고 상단 줄로 올라가서 텍스트를 입력하면 보이는 것으로 확인
+1
 */
 
 /* 
@@ -129,6 +137,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             return 0;
         }
         textBuffer[i][0] = L'\0'; // 각 행의 첫 번째 열에 NULL 문자 삽입
+		textRows = 1; // 초기에 한 행만 할당되었음을 표시 <<< 한개를 할당한 상태
     }
 
     // 텍스트 입력 받는거. 이게 있어야지 사용자가 키를 누르던 마우스를 누르던 알 수 있음
@@ -147,9 +156,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 // 윈도우 프로시저
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    switch (message) {
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
+{
+    switch (message) 
+	{
         case WM_CREATE:
+         ///******///
             CreateCaret(hWnd, NULL, 1, TEXT_HEIGHT);
             ShowCaret(hWnd);
             SetCaretPos(0, 0);
@@ -160,10 +172,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             break;
 
         case WM_COMMAND:
-            switch (LOWORD(wParam)) {
+            switch (LOWORD(wParam)) 
+			{
                 case ID_FILE_NEW:
                     // 텍스트 초기화
-                    for (int i = 0; i < MAX_ROWS; ++i) {
+                    for (int i = 0; i < MAX_ROWS; ++i) 
+					{
                         textBuffer[i][0] = L'\0';
                     }
                     textRows = 0;
@@ -179,9 +193,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     CreateNewMemoWindow(hInst); 
                     break;
 
+            
             case ID_FILE_SAVE:
-               {
+               
+				{
                   OPENFILENAMEW save; // 유니코드 버전의 OPENFILENAME 구조체 사용
+                  
                   WCHAR szFileName[MAX_PATH] = L"";
 
                   ZeroMemory(&save, sizeof(save));
@@ -193,12 +210,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                   save.nMaxFile = sizeof(szFileName) / sizeof(*szFileName);
                   save.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
-    
-                  if (GetSaveFileNameW(&save) == TRUE) { // GetSaveFileNameW 함수 사용하여 유니코드로 파일 이름 처리
+                  if (GetSaveFileNameW(&save) == TRUE) 
+				  { // GetSaveFileNameW 함수 사용하여 유니코드로 파일 이름 처리
                      FILE* file = _wfopen(save.lpstrFile, L"w, ccs=UTF-8"); // 파일 이름을 유니코드로 처리하여 열기
-                     if (file != NULL) {
+                     if (file != NULL) 
+					 {
                         // 모든 행에 대해 파일에 쓰기
-                        for (int i = 0; i < textRows; ++i) {
+                        for (int i = 0; i < textRows; ++i) 
+						{
                            fwprintf(file, L"%s\n", textBuffer[i]); // 유니코드로 파일에 쓰기
                         }
                         fclose(file); // 파일 닫기
@@ -206,7 +225,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                   }
                }
                break;
-
 
             case ID_FILE_OPEN:
                {
@@ -219,19 +237,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     
                   open.lStructSize = sizeof(open);
                   open.hwndOwner = hWnd;
-    
+                  
                   open.lpstrFilter = L"텍스트 파일 (*.txt)\0*.TXT\0모든 파일 (*.*)\0*.*\0";
                   open.lpstrFile = szFileName;
                   open.lpstrFile[0] = L'\0';
                   open.nMaxFile = sizeof(szFileName) / sizeof(*szFileName);
                   open.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-                  if (GetOpenFileNameW(&open) == TRUE) { // GetOpenFileNameW 함수 사용하여 유니코드로 파일 이름 처리
+                  
+                  if (GetOpenFileNameW(&open) == TRUE) 
+				  { // GetOpenFileNameW 함수 사용하여 유니코드로 파일 이름 처리
                      FILE* file = _wfopen(open.lpstrFile, L"r, ccs=UTF-8"); // 파일 이름을 유니코드로 처리하여 열기
-                     if (file != NULL) {
+                     if (file != NULL) 
+					 {
                         // 텍스트를 저장할 임시 버퍼 할당
                         WCHAR tempBuffer[MAX_COLUMNS];
-                        while (fgetws(tempBuffer, MAX_COLUMNS, file) != NULL) {
+                        while (fgetws(tempBuffer, MAX_COLUMNS, file) != NULL) 
+						{
                            tempBuffer[wcslen(tempBuffer) - 1] = L'\0'; // 개행 문자 제거
                            wcscpy_s(textBuffer[textRows], MAX_COLUMNS, tempBuffer);
                            textRows++;
@@ -245,57 +266,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         caretRow = 0;
                         caretColumn = 0;
                         InvalidateRect(hWnd, NULL, TRUE); // 윈도우를 다시 그리도록 강제
+                     
                      }
                   }
                }
                break;
-
-               //수직 스크롤 구현
-               case WM_VSCROLL:
-               {
-                  int scrollY = GetScrollPos(hWnd, SB_VERT);
-                  switch (LOWORD(wParam)) {
-                  case SB_LINEUP:
-                     break;
-        
-                  case SB_LINEDOWN:
-                     break;
-                  }
-                  break;
-               }
-
-         // 수평 스크롤 구현
-            case WM_HSCROLL:
-            {   
-               int scrollX = GetScrollPos(hWnd, SB_HORZ);
-               switch (LOWORD(wParam)) {
-               case SB_LINELEFT:   // 왼쪽으로 한 칸 스크롤
-                  scrollX--;
-                  break;
-               case SB_LINERIGHT: // 오른쪽으로 한 칸 스크롤
-                  scrollX++;
-                  break;
-               case SB_THUMBPOSITION: // 스크롤바 드래그
-                  scrollX = HIWORD(wParam);
-                  break;
-               }
-    
-               // 스크롤 위치가 범위를 벗어나지 않도록 조정
-               scrollX = max(0, min(MAX_COLUMNS - 1, scrollX));
-    
-               // 스크롤 위치를 설정
-               SetScrollPos(hWnd, SB_HORZ, scrollX, TRUE);
-    
-               // 화면을 다시 그림
-               InvalidateRect(hWnd, NULL, TRUE);
-               break;
-            }
-
-                case ID_FILE_EXIT:
-                    DestroyWindow(hWnd);
-                    break;
-            }
-            break;
+                
+			case ID_FILE_EXIT:
+				DestroyWindow(hWnd);
+				break;
+		}         
+		break;
 
       case WM_SIZE:
             break;
@@ -325,6 +306,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 case VK_DOWN:
                     if (caretRow < textRows) caretRow++;
                     break;
+				        
+				case VK_PRIOR: // 페이지 업
+					// 캐럿 행을 표시된 행의 수만큼 위로 스크롤.
+					caretRow -= textRows;
+					// 행 값이 0보다 작으면 최상단이 0까지가도록 하기위해서 넣음.
+					if (caretRow < 0) caretRow = 0;
+					break;
+        
+				case VK_NEXT: // 페이지 다운
+					caretRow += textRows-1;
+					// 현재 캐럿이 텍스트 캐럿보다 밑에 형성될때 캐럿은 현재 존재하는 행의 좌표.
+					if (caretRow > textRows) caretRow = textRows;
+					break;
 
                 case VK_TAB:
                     // 탭 문자 대신 스페이스를 넣어 일정 간격을 벌려줍니다.
@@ -333,7 +327,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     }
                     // 일정 간격만큼 스페이스를 넣어줍니다.
                     for (int i = 0; i < tabWidth; ++i) {
-                        textBuffer[caretRow][caretColumn + i] = L'   ';
+                        textBuffer[caretRow][caretColumn + i] = L' ';
                     }
                     caretColumn += tabWidth;
                     textColumns += tabWidth;
