@@ -11,10 +11,10 @@ int i = 0;
 int Limit_min = INT_MIN;    // 최소 금액의 수치
 int Limit_max = INT_MAX;    // 최고 금액의 수치
 char str[100];              // itoa 함수 사용 후 저장한 변수
-char str2[100];             // ""
-char str3[100];             // ""
-char str4[100];             // ""
-char str5[100];             // ""
+char str2[100];             // " "
+char str3[100];             // " "
+char str4[100];             // " "
+char str5[100];             // " "
 long long Sum_income = 0;   // 고정 수입 총 합
 long long Sum_expense = 0;  // 고정 지출 총 합
 
