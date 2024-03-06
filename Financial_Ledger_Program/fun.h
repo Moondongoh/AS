@@ -26,5 +26,4 @@ void fixed();               // 고정 지출
 void print();               // 잔액 출력
 void N_time();              // 년 월 일 시 분 초 시간 나타내기
 
-
 #endif
