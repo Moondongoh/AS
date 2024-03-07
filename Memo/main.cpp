@@ -41,6 +41,11 @@ SetScrollRange(hWnd, SB_HORZ, 0, MAX_COLUMNS - 1, TRUE);
 4. HOME, END, DELETE BACK SPACE, ENTER, TAB 방향키키 먹음 INSERT와 PAGE UP, DOWN 안됌
 5.스크롤바 출력 가능 (구현은 안됌)
 */
+
+
+/*
+스크롤바 기능 구현 완료 왼쪽 오른쪽 상단 하단누르면 움직임 스크롤바 이동도 가능
+*/
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,6 +54,8 @@ SetScrollRange(hWnd, SB_HORZ, 0, MAX_COLUMNS - 1, TRUE);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
+   SCROLLINFO si; 
+
 HINSTANCE hInst;
 HWND hEdit;
 WCHAR **textBuffer = NULL;      // 2차원 배열
@@ -56,11 +63,16 @@ int textRows = 0;            // x값을 나타낸다라고 생각
 int textColumns = 0;         // y값을 나타낸다라고 생각
 int caretRow = 0;            // 캐럿의 x
 int caretColumn = 0;         // 캐럿의 y/
-const int MAX_ROWS = 10000;     // 최대 행 수
-const int MAX_COLUMNS = 10000;  // 최대 열 수
+const int MAX_ROWS = 1000;     // 최대 행 수
+const int MAX_COLUMNS = 1000;  // 최대 열 수
 const int TEXT_HEIGHT = 16;
 const int PAGE_SIZE = 10;       // 한번에 스크롤한 페이지
 int tabWidth = 4;
+
+int textPosX = 0;
+int textPosY = 0;
+
+POINT CaretP;
 
 // 새 창을 생성하는 함수
 HWND CreateNewMemoWindow(HINSTANCE hInstance) {
@@ -137,7 +149,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             return 0;
         }
         textBuffer[i][0] = L'\0'; // 각 행의 첫 번째 열에 NULL 문자 삽입
-		textRows = 1; // 초기에 한 행만 할당되었음을 표시 <<< 한개를 할당한 상태
+      textRows = 1; // 초기에 한 행만 할당되었음을 표시 <<< 한개를 할당한 상태
     }
 
     // 텍스트 입력 받는거. 이게 있어야지 사용자가 키를 누르던 마우스를 누르던 알 수 있음
@@ -158,8 +170,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 // 윈도우 프로시저
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 {
+
     switch (message) 
-	{
+   {
         case WM_CREATE:
          ///******///
             CreateCaret(hWnd, NULL, 1, TEXT_HEIGHT);
@@ -173,11 +186,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         case WM_COMMAND:
             switch (LOWORD(wParam)) 
-			{
+         {
                 case ID_FILE_NEW:
                     // 텍스트 초기화
                     for (int i = 0; i < MAX_ROWS; ++i) 
-					{
+               {
                         textBuffer[i][0] = L'\0';
                     }
                     textRows = 0;
@@ -196,7 +209,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             
             case ID_FILE_SAVE:
                
-				{
+            {
                   OPENFILENAMEW save; // 유니코드 버전의 OPENFILENAME 구조체 사용
                   
                   WCHAR szFileName[MAX_PATH] = L"";
@@ -211,13 +224,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   save.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
                   if (GetSaveFileNameW(&save) == TRUE) 
-				  { // GetSaveFileNameW 함수 사용하여 유니코드로 파일 이름 처리
+              { // GetSaveFileNameW 함수 사용하여 유니코드로 파일 이름 처리
                      FILE* file = _wfopen(save.lpstrFile, L"w, ccs=UTF-8"); // 파일 이름을 유니코드로 처리하여 열기
                      if (file != NULL) 
-					 {
+                {
                         // 모든 행에 대해 파일에 쓰기
                         for (int i = 0; i < textRows; ++i) 
-						{
+                  {
                            fwprintf(file, L"%s\n", textBuffer[i]); // 유니코드로 파일에 쓰기
                         }
                         fclose(file); // 파일 닫기
@@ -245,14 +258,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   open.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
                   
                   if (GetOpenFileNameW(&open) == TRUE) 
-				  { // GetOpenFileNameW 함수 사용하여 유니코드로 파일 이름 처리
+              { // GetOpenFileNameW 함수 사용하여 유니코드로 파일 이름 처리
                      FILE* file = _wfopen(open.lpstrFile, L"r, ccs=UTF-8"); // 파일 이름을 유니코드로 처리하여 열기
                      if (file != NULL) 
-					 {
+                {
                         // 텍스트를 저장할 임시 버퍼 할당
                         WCHAR tempBuffer[MAX_COLUMNS];
                         while (fgetws(tempBuffer, MAX_COLUMNS, file) != NULL) 
-						{
+                  {
                            tempBuffer[wcslen(tempBuffer) - 1] = L'\0'; // 개행 문자 제거
                            wcscpy_s(textBuffer[textRows], MAX_COLUMNS, tempBuffer);
                            textRows++;
@@ -272,13 +285,131 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                }
                break;
                 
-			case ID_FILE_EXIT:
-				DestroyWindow(hWnd);
-				break;
-		}         
-		break;
+         case ID_FILE_EXIT:
+            DestroyWindow(hWnd);
+            break;
+      }         
+      break;
+     ///
+     case WM_HSCROLL:
+        ZeroMemory(&si, sizeof(si));
+        si.cbSize = sizeof(si);
+        si.fMask = SIF_ALL;
+        GetScrollInfo(hWnd, SB_HORZ, &si);
+
+        switch (LOWORD (wParam))
+        
+        {
+        // 왼쪽 버튼 누르면 움직임 하지만 왼쪽 한계점 설정
+        case SB_LINELEFT:
+         if(textPosX == 0)
+         {
+         break;
+         }
+         GetCaretPos(&CaretP);
+            textPosX -= 8;
+         SetCaretPos(CaretP.x+8, CaretP.y);
+         si.nPos -= 8;
+         SetScrollInfo(hWnd, SB_HORZ, &si, TRUE); // Add this line
+         InvalidateRect(hWnd, NULL, TRUE);
+         UpdateWindow(hWnd);
+            break;
+              
+        // 오른쪽 버튼 누르면 움직임.
+        case SB_LINERIGHT:
+         if(MAX_ROWS == 0)
+         {
+         break;
+         }
+         
+         GetCaretPos(&CaretP);
+            textPosX += 8;
+         SetCaretPos(CaretP.x-8, CaretP.y);
+         si.nPos += 8;
+         SetScrollInfo(hWnd, SB_HORZ, &si, TRUE); // Add this line
+         InvalidateRect(hWnd, NULL, TRUE);
+         UpdateWindow(hWnd);
+            break;
+      case SB_THUMBTRACK:
+         si.nPos = si.nTrackPos;
+         textPosX = si.nPos;
+         SetScrollInfo(hWnd, SB_HORZ, &si, TRUE);
+         InvalidateRect(hWnd, NULL, TRUE);
+         UpdateWindow(hWnd);
+         break;
+        }
+        break;
+        
+     case WM_VSCROLL:
+        
+        ZeroMemory(&si, sizeof(si));
+        si.cbSize = sizeof(si);
+        si.fMask = SIF_ALL;
+        GetScrollInfo(hWnd, SB_VERT, &si);
+
+        switch (LOWORD (wParam))
+        {
+
+        // 위 버튼 누르면 움직임.
+        case SB_LINEUP:
+         if(textPosY == 0)
+         {
+         break;
+         }
+         GetCaretPos(&CaretP);
+            textPosY -= 16;
+         si.nPos -= 16; // Add this line
+         SetScrollInfo(hWnd, SB_VERT, &si, TRUE); // Add this line
+         SetCaretPos(CaretP.x, CaretP.y+16);
+         InvalidateRect(hWnd, NULL, TRUE);
+         UpdateWindow(hWnd);
+            break;
+              
+        // 아래 버튼 누르면 움직임.
+        case SB_LINEDOWN:
+         GetCaretPos(&CaretP);
+            textPosY += 16;
+         si.nPos += 16; // Add this line
+         SetScrollInfo(hWnd, SB_VERT, &si, TRUE); // Add this line
+         SetCaretPos(CaretP.x, CaretP.y-16);
+         InvalidateRect(hWnd, NULL, TRUE);
+         UpdateWindow(hWnd);
+            break;
+
+      case SB_THUMBTRACK:
+         si.nPos = si.nTrackPos;
+         textPosY = si.nPos;
+         SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
+         InvalidateRect(hWnd, NULL, TRUE);
+         UpdateWindow(hWnd);
+         break;
+
+           }
+        break;
 
       case WM_SIZE:
+         {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hWnd, &ps);
+            SetTextColor(hdc, RGB(0, 0, 0));
+            SetBkColor(hdc, RGB(255, 255, 255));
+
+         HFONT hFont = CreateFont(17, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                          CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, TEXT("Courier New"));
+         HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
+         //FF_MODERN는 고정폭 글꼴을 의미하는 플래그이며, Courier New는 고정폭 글꼴의 한 코드임.
+         //문제점 Courier New << 이친구는 영문만 고정폭 지원
+
+            // 모든 텍스트를 출력
+            for (int i = 0; i < textRows; ++i) {
+                TextOut(hdc, 0, TEXT_HEIGHT * i, textBuffer[i], wcslen(textBuffer[i]));
+            }
+         SelectObject(hdc, hOldFont);
+         DeleteObject(hFont);
+
+            EndPaint(hWnd, &ps);
+            break;
+        }
             break;
 
         case WM_KEYDOWN:
@@ -306,19 +437,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 case VK_DOWN:
                     if (caretRow < textRows) caretRow++;
                     break;
-				        
-				case VK_PRIOR: // 페이지 업
-					// 캐럿 행을 표시된 행의 수만큼 위로 스크롤.
-					caretRow -= textRows;
-					// 행 값이 0보다 작으면 최상단이 0까지가도록 하기위해서 넣음.
-					if (caretRow < 0) caretRow = 0;
-					break;
+                    
+            case VK_PRIOR: // 페이지 업
+               // 캐럿 행을 표시된 행의 수만큼 위로 스크롤.
+               caretRow -= textRows;
+               // 행 값이 0보다 작으면 최상단이 0까지가도록 하기위해서 넣음.
+               if (caretRow < 0) caretRow = 0;
+               break;
         
-				case VK_NEXT: // 페이지 다운
-					caretRow += textRows-1;
-					// 현재 캐럿이 텍스트 캐럿보다 밑에 형성될때 캐럿은 현재 존재하는 행의 좌표.
-					if (caretRow > textRows) caretRow = textRows;
-					break;
+            case VK_NEXT: // 페이지 다운
+               caretRow += textRows-1;
+               // 현재 캐럿이 텍스트 캐럿보다 밑에 형성될때 캐럿은 현재 존재하는 행의 좌표.
+               if (caretRow > textRows) caretRow = textRows;
+               break;
 
                 case VK_TAB:
                     // 탭 문자 대신 스페이스를 넣어 일정 간격을 벌려줍니다.
@@ -428,6 +559,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
          break;
 
 
+
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
@@ -442,7 +574,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             // 모든 텍스트를 출력
             for (int i = 0; i < textRows; ++i) {
-                TextOut(hdc, 0, TEXT_HEIGHT * i, textBuffer[i], wcslen(textBuffer[i]));
+                TextOut(hdc, 0 - textPosX, TEXT_HEIGHT * i - textPosY, textBuffer[i], wcslen(textBuffer[i]));
             }
          SelectObject(hdc, hOldFont);
          DeleteObject(hFont);
@@ -450,6 +582,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             EndPaint(hWnd, &ps);
             break;
         }
+
+      case WM_KILLFOCUS:
+
+         HideCaret(hWnd);
+         DestroyCaret();
+              break;
+   
+      case WM_SETFOCUS:
+      {
+         CreateCaret(hWnd,NULL,1, 17);
+         ShowCaret(hWnd);
+      }
+      break;
 
         case WM_DESTROY:
             PostQuitMessage(0);
