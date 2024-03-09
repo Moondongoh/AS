@@ -46,6 +46,8 @@ SetScrollRange(hWnd, SB_HORZ, 0, MAX_COLUMNS - 1, TRUE);
 /*
 스크롤바 기능 구현 완료 왼쪽 오른쪽 상단 하단누르면 움직임 스크롤바 이동도 가능
 */
+
+
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,28 +56,31 @@ SetScrollRange(hWnd, SB_HORZ, 0, MAX_COLUMNS - 1, TRUE);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-   SCROLLINFO si; 
+SCROLLINFO si; 
 
 HINSTANCE hInst;
 HWND hEdit;
-WCHAR **textBuffer = NULL;      // 2차원 배열
-int textRows = 0;            // x값을 나타낸다라고 생각
-int textColumns = 0;         // y값을 나타낸다라고 생각
-int caretRow = 0;            // 캐럿의 x
-int caretColumn = 0;         // 캐럿의 y/
-const int MAX_ROWS = 1000;     // 최대 행 수
-const int MAX_COLUMNS = 1000;  // 최대 열 수
+WCHAR **textBuffer = NULL;         // 2차원 배열
+int textRows = 0;               // x값을 나타낸다라고 생각
+int textColumns = 0;            // y값을 나타낸다라고 생각
+int caretRow = 0;               // 캐럿의 x
+int caretColumn = 0;            // 캐럿의 y/
+const int MAX_ROWS = 1000;         // 최대 행 수
+const int MAX_COLUMNS = 1000;      // 최대 열 수
 const int TEXT_HEIGHT = 16;
-const int PAGE_SIZE = 10;       // 한번에 스크롤한 페이지
+const int PAGE_SIZE = 10;         // 한번에 스크롤한 페이지
 int tabWidth = 4;
 
 int textPosX = 0;
 int textPosY = 0;
-
 POINT CaretP;
 
+static int x,y;
+
+
 // 새 창을 생성하는 함수
-HWND CreateNewMemoWindow(HINSTANCE hInstance) {
+HWND CreateNewMemoWindow(HINSTANCE hInstance) 
+{
     textRows = 0;      // 텍스트 행 수 초기화
     textColumns = 0;   // 텍스트 열 수 초기화
     caretRow = 0;      // 커서 행 위치 초기화
@@ -87,16 +92,18 @@ HWND CreateNewMemoWindow(HINSTANCE hInstance) {
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wc.lpszClassName = TEXT("MyMemoClass");
 
-    RegisterClass(&wc);
+    RegisterClass(&wc); //윈도우 등록 후
 
+   // 윈도우를 생성
     HWND hWnd = CreateWindow(wc.lpszClassName, TEXT("동오의 비밀의 새 창 메모장"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, NULL, LoadMenu(hInstance, MAKEINTRESOURCE(IDR_MENU1)), hInstance, NULL);
     // "중요" 새 창을 화면에 표시함.
     ShowWindow(hWnd, SW_SHOWNORMAL); 
 
 
-    // 텍스트 입력 받는거.
+    // 메시지 루프 >> 이벤트를 순서대로 반복문으로 처리함.
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
+    while (GetMessage(&msg, NULL, 0, 0)) 
+   {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -106,7 +113,8 @@ HWND CreateNewMemoWindow(HINSTANCE hInstance) {
 }
 
 // WinMain 함수
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) 
+{
     MSG msg;
     WNDCLASS wc = {0};
 
@@ -115,20 +123,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wc.lpszClassName = TEXT("MyMemoClass");
 
-    if (!RegisterClass(&wc)) return 0;
+    if (!RegisterClass(&wc)) return 0; //윈도우 등록
 
+   // 윈도우 생성
     HWND hWnd = CreateWindow(
-        wc.lpszClassName,                           // 윈도우 클래스 이름
-        TEXT("동오의 비밀의 메모장"),                  // 윈도우 제목
-        WS_OVERLAPPEDWINDOW | WS_VSCROLL | WS_HSCROLL,      // 윈도우 스타일에 수직 및 수평 스크롤바 추가 기능 추가해야지 구현됌
-        CW_USEDEFAULT,                              // x 위치
-        CW_USEDEFAULT,                              // y 위치
-        640,                                    // 너비
-        480,                                    // 높이
-        NULL,                                    // 부모 윈도우 핸들
-        LoadMenu(hInstance, MAKEINTRESOURCE(IDR_MENU1)),   // 메뉴 핸들
-        hInstance,                                 // 인스턴스 핸들
-        NULL                                    // 추가 매개변수
+        wc.lpszClassName,                        // 윈도우 클래스 이름
+        TEXT("동오의 비밀의 메모장"),               // 윈도우 제목
+        WS_OVERLAPPEDWINDOW | WS_VSCROLL | WS_HSCROLL,   // 윈도우 스타일에 수직 및 수평 스크롤바 추가 기능 추가해야지 구현됌
+        CW_USEDEFAULT,                           // x 위치
+        CW_USEDEFAULT,                           // y 위치
+        640,                                 // 너비
+        480,                                 // 높이
+        NULL,                                 // 부모 윈도우 핸들
+        LoadMenu(hInstance, MAKEINTRESOURCE(IDR_MENU1)),// 메뉴 핸들
+        hInstance,                              // 인스턴스 핸들
+        NULL                                 // 추가 매개변수
     );
 
     if (!hWnd) return 0;
@@ -138,13 +147,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // 텍스트 버퍼를 할당
     textBuffer = (WCHAR**)malloc(MAX_ROWS * sizeof(WCHAR*));
-    if (textBuffer == NULL) {
+    if (textBuffer == NULL) 
+   {
         MessageBox(NULL, TEXT("메모리 할당에 실패했습니다."), TEXT("에러"), MB_OK | MB_ICONERROR);
         return 0;
     }
-    for (int i = 0; i < MAX_ROWS; ++i) {
+    for (int i = 0; i < MAX_ROWS; ++i) 
+   {
         textBuffer[i] = (WCHAR*)malloc(MAX_COLUMNS * sizeof(WCHAR));
-        if (textBuffer[i] == NULL) {
+        if (textBuffer[i] == NULL) 
+      {
             MessageBox(NULL, TEXT("메모리 할당에 실패했습니다."), TEXT("에러"), MB_OK | MB_ICONERROR);
             return 0;
         }
@@ -152,14 +164,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       textRows = 1; // 초기에 한 행만 할당되었음을 표시 <<< 한개를 할당한 상태
     }
 
-    // 텍스트 입력 받는거. 이게 있어야지 사용자가 키를 누르던 마우스를 누르던 알 수 있음
-    while (GetMessage(&msg, NULL, 0, 0)) {
+    // 메시지 루프 >> 이벤트를 순서대로 반복문으로 처리함.
+    while (GetMessage(&msg, NULL, 0, 0)) 
+   {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
     // 할당된 메모리 해제
-    for (int i = 0; i < MAX_ROWS; ++i) {
+    for (int i = 0; i < MAX_ROWS; ++i) 
+   {
         free(textBuffer[i]);
     }
     free(textBuffer);
@@ -167,12 +181,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     return (int)msg.wParam;
 }
 
-// 윈도우 프로시저
+// 윈도우 프로시저 >> 여기가 메시지를 처리하는 곳 각 케이스로 가서 처리
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 {
 
     switch (message) 
    {
+      /// 
+   case WM_LBUTTONDOWN:
+      if (wParam & MK_CONTROL) 
+      {
+         x=0;y=0;
+      } else 
+      {
+         x=LOWORD(lParam);
+         y=HIWORD(lParam);
+      }
+          
+      SetCaretPos(x, y); // 사용자가 마우스 좌 클릭한 위치로 캐럿 이동
+      ShowCaret(hWnd);
+
+      return 0;
+      ///
+
         case WM_CREATE:
          ///******///
             CreateCaret(hWnd, NULL, 1, TEXT_HEIGHT);
@@ -214,16 +245,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   
                   WCHAR szFileName[MAX_PATH] = L"";
 
-                  ZeroMemory(&save, sizeof(save));
+                  ZeroMemory(&save, sizeof(save));      //변수를 초기화하기 위해 사용
                   save.lStructSize = sizeof(save);
                   save.hwndOwner = hWnd;
                   save.lpstrFilter = L"텍스트 파일 (*.txt)\0*.TXT\0모든 파일 (*.*)\0*.*\0";
-                  save.lpstrFile = szFileName;
-                  save.lpstrFile[0] = L'\0';
+                  save.lpstrFile = szFileName;         // 파일 이름을 저장할 버퍼
+                  save.lpstrFile[0] = L'\0';         // 파일 이름 버퍼 초기화
                   save.nMaxFile = sizeof(szFileName) / sizeof(*szFileName);
                   save.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
                   if (GetSaveFileNameW(&save) == TRUE) 
+
               { // GetSaveFileNameW 함수 사용하여 유니코드로 파일 이름 처리
                      FILE* file = _wfopen(save.lpstrFile, L"w, ccs=UTF-8"); // 파일 이름을 유니코드로 처리하여 열기
                      if (file != NULL) 
@@ -232,11 +264,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         for (int i = 0; i < textRows; ++i) 
                   {
                            fwprintf(file, L"%s\n", textBuffer[i]); // 유니코드로 파일에 쓰기
-                        }
-                        fclose(file); // 파일 닫기
-                     }
                   }
-               }
+                        fclose(file); // 파일 닫기
+                }
+              }
+            }
                break;
 
             case ID_FILE_OPEN:
@@ -246,7 +278,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                   WCHAR szFileName[MAX_PATH] = L"";
 
-                  ZeroMemory(&open, sizeof(open));
+                  ZeroMemory(&open, sizeof(open)); //저장과 동일하게 초기화
     
                   open.lStructSize = sizeof(open);
                   open.hwndOwner = hWnd;
@@ -264,10 +296,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                         // 텍스트를 저장할 임시 버퍼 할당
                         WCHAR tempBuffer[MAX_COLUMNS];
-                        while (fgetws(tempBuffer, MAX_COLUMNS, file) != NULL) 
+                        while (fgetws(tempBuffer, MAX_COLUMNS, file) != NULL)  // 한 줄 한 줄 읽어옴 NULL까지
+                  
                   {
                            tempBuffer[wcslen(tempBuffer) - 1] = L'\0'; // 개행 문자 제거
-                           wcscpy_s(textBuffer[textRows], MAX_COLUMNS, tempBuffer);
+                           wcscpy_s(textBuffer[textRows], MAX_COLUMNS, tempBuffer); //읽은 거 복사하기 줄 수 올리면서
                            textRows++;
                         }
                         fclose(file); // 파일 닫기
@@ -323,13 +356,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
          }
          
          GetCaretPos(&CaretP);
-            textPosX += 8;
+         textPosX += 8;
          SetCaretPos(CaretP.x-8, CaretP.y);
          si.nPos += 8;
          SetScrollInfo(hWnd, SB_HORZ, &si, TRUE); // Add this line
          InvalidateRect(hWnd, NULL, TRUE);
          UpdateWindow(hWnd);
-            break;
+       break;
+      
       case SB_THUMBTRACK:
          si.nPos = si.nTrackPos;
          textPosX = si.nPos;
@@ -347,45 +381,50 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         si.fMask = SIF_ALL;
         GetScrollInfo(hWnd, SB_VERT, &si);
 
-        switch (LOWORD (wParam))
-        {
-
+        
+   switch (LOWORD (wParam))
+      
+   {
         // 위 버튼 누르면 움직임.
-        case SB_LINEUP:
+      case SB_LINEUP:
          if(textPosY == 0)
-         {
+       {
          break;
          }
          GetCaretPos(&CaretP);
-            textPosY -= 16;
+         textPosY -= 16;
          si.nPos -= 16; // Add this line
-         SetScrollInfo(hWnd, SB_VERT, &si, TRUE); // Add this line
+         SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
          SetCaretPos(CaretP.x, CaretP.y+16);
          InvalidateRect(hWnd, NULL, TRUE);
          UpdateWindow(hWnd);
-            break;
+         break;
               
         // 아래 버튼 누르면 움직임.
         case SB_LINEDOWN:
+         
          GetCaretPos(&CaretP);
-            textPosY += 16;
+         textPosY += 16;
          si.nPos += 16; // Add this line
-         SetScrollInfo(hWnd, SB_VERT, &si, TRUE); // Add this line
+         SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
          SetCaretPos(CaretP.x, CaretP.y-16);
          InvalidateRect(hWnd, NULL, TRUE);
          UpdateWindow(hWnd);
-            break;
+         break;
 
+      
+      
       case SB_THUMBTRACK:
+         
          si.nPos = si.nTrackPos;
          textPosY = si.nPos;
          SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
          InvalidateRect(hWnd, NULL, TRUE);
          UpdateWindow(hWnd);
          break;
-
-           }
-        break;
+   }
+        
+   break;
 
       case WM_SIZE:
          {
@@ -401,19 +440,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
          //문제점 Courier New << 이친구는 영문만 고정폭 지원
 
             // 모든 텍스트를 출력
-            for (int i = 0; i < textRows; ++i) {
+            for (int i = 0; i < textRows; ++i) 
+         {
                 TextOut(hdc, 0, TEXT_HEIGHT * i, textBuffer[i], wcslen(textBuffer[i]));
-            }
+         }
          SelectObject(hdc, hOldFont);
          DeleteObject(hFont);
-
             EndPaint(hWnd, &ps);
             break;
         }
             break;
 
         case WM_KEYDOWN:
-            switch (wParam) {
+            switch (wParam) 
+         {
                 case VK_HOME:
                     caretColumn = 0;
                     break;
@@ -453,11 +493,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                 case VK_TAB:
                     // 탭 문자 대신 스페이스를 넣어 일정 간격을 벌려줍니다.
-                    for (int i = textColumns; i > caretColumn; i--) {
+                    for (int i = textColumns; i > caretColumn; i--) 
+               {
                         textBuffer[caretRow][i + tabWidth] = textBuffer[caretRow][i];
                     }
                     // 일정 간격만큼 스페이스를 넣어줍니다.
-                    for (int i = 0; i < tabWidth; ++i) {
+                    for (int i = 0; i < tabWidth; ++i) 
+               {
                         textBuffer[caretRow][caretColumn + i] = L' ';
                     }
                     caretColumn += tabWidth;
@@ -471,14 +513,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                // 예를 들어, 새로운 줄로 이동하고 새로운 줄을 미리 채워넣을 수 있습니다.
                // 이 코드에서는 새로운 줄로 이동하고 빈 줄을 추가합니다.
                // 새로운 행 추가
-               for (int i = textRows; i > caretRow; i--) {
+               for (int i = textRows; i > caretRow; i--) 
+            {
                   wcscpy_s(textBuffer[i], MAX_COLUMNS, textBuffer[i - 1]);
                }
                textRows++;
                caretRow++;
 
                // 새로운 행 초기화
-               for (int j = MAX_COLUMNS - 1; j > 0; j--) {
+               for (int j = MAX_COLUMNS - 1; j > 0; j--) 
+            {
                   textBuffer[caretRow][j] = textBuffer[caretRow - 1][j - 1];
                }
                textBuffer[caretRow][0] = L'\0'; // 새로운 줄의 첫 번째 열에 NULL 문자 삽입
@@ -489,13 +533,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             case VK_BACK:
                // 백스페이스를 누르면 커서의 왼쪽에 있는 문자를 삭제합니다.
-               if (caretColumn > 0) {
-                  for (int i = caretColumn - 1; i < textColumns; i++) {
+               if (caretColumn > 0) 
+            {
+                  for (int i = caretColumn - 1; i < textColumns; i++) 
+              {
                      textBuffer[caretRow][i] = textBuffer[caretRow][i + 1];
                   }
                   caretColumn--;
                   textColumns--;
-               } else if (caretRow > 0) {  // 줄 바꿈을 고려합니다.
+               } else if (caretRow > 0) 
+            {  // 줄 바꿈을 고려합니다.
                   caretRow--; //Row를 하나 줄이고 그 줄 끝에서 왼쪽으로 하나씩 삭제하도록
                   caretColumn = wcslen(textBuffer[caretRow]);  // 이전 줄의 길이로 caretColumn을 설정합니다.
                   textColumns = caretColumn;
@@ -504,8 +551,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                 case VK_DELETE:
                     // 딜리트를 누르면 커서의 위치에 있는 문자를 삭제합니다.
-                    if (caretColumn < textColumns) {
-                        for (int i = caretColumn; i < textColumns; i++) {
+                    if (caretColumn < textColumns) 
+               {
+                        for (int i = caretColumn; i < textColumns; i++) 
+                  {
                             textBuffer[caretRow][i] = textBuffer[caretRow][i + 1];
                         }
                         textColumns--;
@@ -523,15 +572,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
       case WM_CHAR:
          
-         if (textRows < MAX_ROWS && textColumns < MAX_COLUMNS) {
+         if (textRows < MAX_ROWS && textColumns < MAX_COLUMNS) 
+       {
             if ((wParam >= 0x20 && wParam <= 0x7E) ||   // ASCII 문자 범위 이게 영어
-               (wParam >= 0xAC00 && wParam <= 0xD7AF)) {  // 한글 유니코드 범위
+               (wParam >= 0xAC00 && wParam <= 0xD7AF)) 
+         {  // 한글 유니코드 범위
                   
                   // 버퍼 오버플로우 방지
-                  if (textColumns < MAX_COLUMNS - 1) {
+                  if (textColumns < MAX_COLUMNS - 1) 
+              {
                      
                      // 삽입할 문자 이후의 문자들을 오른쪽으로 이동
-                     for (int i = textColumns; i > caretColumn; i--) {
+                     for (int i = textColumns; i > caretColumn; i--) 
+                {
                         textBuffer[caretRow][i] = textBuffer[caretRow][i - 1];
                      }
                 
@@ -560,7 +613,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 
-        case WM_PAINT: {
+        case WM_PAINT: 
+      {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             SetTextColor(hdc, RGB(0, 0, 0));
@@ -573,7 +627,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
          //문제점 Courier New << 이친구는 영문만 고정폭 지원
 
             // 모든 텍스트를 출력
-            for (int i = 0; i < textRows; ++i) {
+            for (int i = 0; i < textRows; ++i) 
+         {
                 TextOut(hdc, 0 - textPosX, TEXT_HEIGHT * i - textPosY, textBuffer[i], wcslen(textBuffer[i]));
             }
          SelectObject(hdc, hOldFont);
@@ -581,7 +636,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             EndPaint(hWnd, &ps);
             break;
-        }
+        
+      }
 
       case WM_KILLFOCUS:
 
@@ -604,4 +660,5 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
+
 }
