@@ -343,7 +343,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             textPosX -= 8;
          SetCaretPos(CaretP.x+8, CaretP.y);
          si.nPos -= 8;
-         SetScrollInfo(hWnd, SB_HORZ, &si, TRUE); // Add this line
+         SetScrollInfo(hWnd, SB_HORZ, &si, TRUE);
          InvalidateRect(hWnd, NULL, TRUE);
          UpdateWindow(hWnd);
             break;
@@ -359,7 +359,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
          textPosX += 8;
          SetCaretPos(CaretP.x-8, CaretP.y);
          si.nPos += 8;
-         SetScrollInfo(hWnd, SB_HORZ, &si, TRUE); // Add this line
+         SetScrollInfo(hWnd, SB_HORZ, &si, TRUE);
          InvalidateRect(hWnd, NULL, TRUE);
          UpdateWindow(hWnd);
        break;
