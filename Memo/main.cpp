@@ -90,7 +90,6 @@ HWND CreateNewMemoWindow(HINSTANCE hInstance)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-
     return hWnd;
 
 }
