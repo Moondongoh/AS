@@ -90,6 +90,7 @@ HWND CreateNewMemoWindow(HINSTANCE hInstance)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+
     return hWnd;
 
 }
@@ -170,23 +171,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) 
 
 	{
-	case WM_LBUTTONDOWN:
+	//case WM_LBUTTONDOWN:
 
-      if (wParam & MK_CONTROL) 
-      {
-         x=0;y=0;
-      } 
+ //     if (wParam & MK_CONTROL) 
+ //     {
+ //        x=0;y=0;
+ //     } 
 
-	  else 
-      {
-         x=LOWORD(lParam);
-         y=HIWORD(lParam);
-      }
-          
-      SetCaretPos(x, y); // 사용자가 마우스 좌 클릭한 위치로 캐럿 이동
-      ShowCaret(hWnd);
+	//  else 
+ //     {
+ //        x=LOWORD(lParam);
+ //        y=HIWORD(lParam);
+ //     }
+ //         
+ //     SetCaretPos(x, y); // 사용자가 마우스 좌 클릭한 위치로 캐럿 이동
+ //     ShowCaret(hWnd);
 
-      return 0;
+ //     return 0;
       
 
         
@@ -433,29 +434,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
       
 		case WM_SIZE:
-         
-			{
-				PAINTSTRUCT ps;
-				HDC hdc = BeginPaint(hWnd, &ps);
-				SetTextColor(hdc, RGB(0, 0, 0));
-				SetBkColor(hdc, RGB(255, 255, 255));
-
-				HFONT hFont = CreateFont(17, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, TEXT("Courier New"));
-				HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
-				//FF_MODERN는 고정폭 글꼴을 의미하는 플래그이며, Courier New는 고정폭 글꼴의 한 코드임.
-				//문제점 Courier New << 이친구는 영문만 고정폭 지원
-
-				// 모든 텍스트를 출력
-				for (int i = 0; i < textRows; ++i) 
-				{
-					TextOut(hdc, 0, TEXT_HEIGHT * i, textBuffer[i], wcslen(textBuffer[i]));
-				}
-         
-				SelectObject(hdc, hOldFont);
-				DeleteObject(hFont);
-				EndPaint(hWnd, &ps);
-				break;
-			}
 			break;
 
         
@@ -557,90 +535,59 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				// 새로운 행 추가
 				for (int i = textRows; i > caretRow; i--) 
 				{
+					//       원본 문자열    문자열 길이  붙이고자하는 내용
 					wcscpy_s(textBuffer[i], MAX_COLUMNS, textBuffer[i - 1]);
 				}
 				textRows++;
 				caretRow++;
                
 				// 새로운 행 초기화
-				for (int j = MAX_COLUMNS - 1; j > 0; j--) 
-				{
-					textBuffer[caretRow][j] = textBuffer[caretRow - 1][j - 1];
-				}
 				textBuffer[caretRow][0] = L'\0'; // 새로운 줄의 첫 번째 열에 NULL 문자 삽입
 				caretColumn = 0;
 				textColumns = 0; // 새로운 줄이므로 열 수를 0으로 설정합니다. << 문자열을 복사해서 다음줄에 배정하기 때문에 복사한 문자열의 문자를 모두 지워주어야해서 텍스트칼럼을 비운다.
 				break;
 
 			case VK_BACK:
-            
+    
 				if (caretColumn > 0) 
 				{
-					// 현재 줄의 이전 줄과 합치기
-					if (caretColumn == 1 && caretRow > 0) 
+					// 일반적인 백스페이스 키 동작
+					for (int i = caretColumn - 1; i < textColumns; ++i) 
 					{
-						// 이전 줄의 길이 계산
-						int prevRowLength = wcslen(textBuffer[caretRow - 1]);
-
-						// 이전 줄의 끝에 현재 줄 내용 추가
-						wcscat_s(textBuffer[caretRow - 1], MAX_COLUMNS, textBuffer[caretRow]);
-
-						// 이전 줄의 길이 갱신
-						textColumns = prevRowLength + textColumns;
-
-						// 현재 줄 삭제
-						for (int i = caretRow; i < textRows - 1; ++i) 
-						{
-							wcscpy_s(textBuffer[i], MAX_COLUMNS, textBuffer[i + 1]);
-						}
-						textRows--;
-
-						// 캐럿 위치 업데이트
-						caretRow--;
-						caretColumn = prevRowLength;
-					} 
-                
-					else 
-
+						textBuffer[caretRow][i] = textBuffer[caretRow][i + 1];
+					}
+					caretColumn--;
+					textColumns--;
+        
+					// 텍스트 업데이트
+					for (int i = caretColumn; i <= textColumns; ++i) 
 					{
-						// 일반적인 백스페이스 키 동작
-						for (int i = caretColumn - 1; i < textColumns; ++i) 
-						{
-							textBuffer[caretRow][i] = textBuffer[caretRow][i + 1];
-						}
-						caretColumn--;
-						textColumns--;
-
-						// 텍스트 업데이트
-						for (int i = caretColumn; i <= textColumns; ++i) 
-						{
-							textBuffer[caretRow][i] = textBuffer[caretRow][i + 1];
-						}
+						textBuffer[caretRow][i] = textBuffer[caretRow][i + 1];
 					}
 				} 
-				
-				
 				else if (caretRow > 0) 
 				{
 					// 이전 줄로 이동하고 마지막 열로 이동
 					caretRow--;
 					caretColumn = wcslen(textBuffer[caretRow]);
-                
+        
 					// 현재 줄의 텍스트를 이전 줄의 끝으로 이동
+					//		원본 문자열		//	  문자열의 길이// 붙이고자 하는 문자 
 					wcscat_s(textBuffer[caretRow], MAX_COLUMNS, textBuffer[caretRow + 1]);
-                
+        
 					// 다음 줄의 텍스트를 현재 줄로 이동
 					for (int i = caretRow + 1; i < textRows - 1; ++i) 
 					{
 						wcscpy_s(textBuffer[i], MAX_COLUMNS, textBuffer[i + 1]);
 					}
 					textRows--; 
-
+        
 					// 현재 줄의 길이 업데이트
 					textColumns = wcslen(textBuffer[caretRow]);
 				}
+    
 				break;
-     
+
 			case VK_DELETE:                
 				// 딜리트를 누르면 커서의 위치에 있는 문자를 삭제합니다.              
 				if (caretColumn < textColumns)            
