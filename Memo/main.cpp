@@ -126,7 +126,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             return 0;
         }
         textBuffer[i][0] = L'\0'; // 각 행의 첫 번째 열에 NULL 문자 삽입
-      textRows = 1; // 초기에 한 행만 할당되었음을 표시 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 한개를 할당한 상태
+      textRows = 1; // 초기에 한 행만 할당되었음을 표시 <<<<<<<<<<<<<<<<<<<<<< 한개를 할당한 상태
     }
 
     // 메시지 루프 >> 이벤트를 순서대로 반복문으로 처리함.
