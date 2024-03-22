@@ -1,11 +1,15 @@
-/* 
-구현 완료
-1. 한글과 영어 입력가능
-2. 메뉴바 생성과 기능들 내역 출력 가능
--새로 만들기, 새 창 열기, 저장 및 열기 가능
-3. 캐럿 출력 (영어는 고정폭을 갖는 글꼴을 찾아서 캐럿의 위치가 맞지만 한글은 맞지 않음)
-4. HOME, END, DELETE BACK SPACE, ENTER, TAB 방향키키 먹음 INSERT와 PAGE UP, DOWN 안됌
-5. 스크롤바 기능 구현 완료 왼쪽 오른쪽 상단 하단누르면 움직임 스크롤바 이동도 가능
+/*
+24.03.21 구현 완료
+1. 윈도우 창을 만들 수 있다.
+2. 창에 텍스트를 입력 할 수 있다.+
+3. 툴바(메뉴바)를 생성해 기능을 이용할 수 있다.
+>>새로 만들기, 새 창 열기, 저장 및 열기, 끝내기
+4. 캐럿이 출력된다. (현재 작업되는 곳을 알려주거나 화면이동에 사용)
+5. 키보드를 이용한 Home, End, Tab, Page UP,Dowm, Delete, Back Space, Enter 사용 가능하다.
+>> Back Space 와 Enter 사용시 줄 바꿈이 자유롭다.
+6. 수평 수직 스크롤을 이용하여 화면을 이동 할 수 있다.
+7. 창의 한계점에서 벗어날 경우 자동으로 화면을 이동 시켜 텍스트를 출력한다.
+>> 텍스트 입력 시와 키보드 방향키를 이용해서 줄을 변경할 때 모두 작동한다.
 */
 
 #include <windows.h>
@@ -20,15 +24,15 @@ SCROLLINFO si;
 
 HINSTANCE hInst;
 HWND hEdit;
-WCHAR **textBuffer = NULL;         // 2차원 배열
-int textRows = 0;               // x값을 나타낸다라고 생각
-int textColumns = 0;            // y값을 나타낸다라고 생각
-int caretRow = 0;               // 캐럿의 x
-int caretColumn = 0;            // 캐럿의 y/
-const int MAX_ROWS = 1000;         // 최대 행 수
-const int MAX_COLUMNS = 1000;      // 최대 열 수
+WCHAR **textBuffer = NULL;				// 2차원 배열
+int textRows = 0;						// x값을 나타낸다라고 생각
+int textColumns = 0;					// y값을 나타낸다라고 생각
+int caretRow = 0;						// 캐럿의 x
+int caretColumn = 0;					// 캐럿의 y/
+const int MAX_ROWS = 1000;				// 최대 행 수
+const int MAX_COLUMNS = 1000;			// 최대 열 수
 const int TEXT_HEIGHT = 16;
-const int PAGE_SIZE = 10;         // 한번에 스크롤한 페이지
+const int PAGE_SIZE = 10;				// 한번에 스크롤한 페이지
 int tabWidth = 4;
 
 int textPosX = 0;
@@ -46,6 +50,7 @@ HWND CreateNewMemoWindow(HINSTANCE hInstance)
     caretRow = 0;      // 커서 행 위치 초기화
     caretColumn = 0;   // 커서 열 위치 초기화
     WNDCLASS wc = {0};
+	textRows = 1;
 
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hInstance;
@@ -108,7 +113,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // 텍스트 버퍼를 할당
     textBuffer = (WCHAR**)malloc(MAX_ROWS * sizeof(WCHAR*));
     if (textBuffer == NULL) 
-   {
+	{
         MessageBox(NULL, TEXT("메모리 할당에 실패했습니다."), TEXT("에러"), MB_OK | MB_ICONERROR);
         return 0;
     }
@@ -116,7 +121,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
    {
         textBuffer[i] = (WCHAR*)malloc(MAX_COLUMNS * sizeof(WCHAR));
         if (textBuffer[i] == NULL) 
-      {
+		{
             MessageBox(NULL, TEXT("메모리 할당에 실패했습니다."), TEXT("에러"), MB_OK | MB_ICONERROR);
             return 0;
         }
@@ -126,14 +131,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // 메시지 루프 >> 이벤트를 순서대로 반복문으로 처리함.
     while (GetMessage(&msg, NULL, 0, 0)) 
-   {
+	{
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
     // 할당된 메모리 해제
     for (int i = 0; i < MAX_ROWS; ++i) 
-   {
+	{
         free(textBuffer[i]);
     }
     free(textBuffer);
@@ -154,7 +159,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
    {
    //case WM_LBUTTONDOWN:
-
+	    //MK_CONTROL Ctrl
  //     if (wParam & MK_CONTROL) 
  //     {
  //        x=0;y=0;
@@ -170,9 +175,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
  //     ShowCaret(hWnd);
 
  //     return 0;
-      
 
-        
    case WM_CREATE:
          
       ///******///
@@ -204,7 +207,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
          textColumns = 0;               
          caretRow = 0;                 
          caretColumn = 0;              
-         SetCaretPos(0, 0);               
+         SetCaretPos(0, 0);
+		 textRows = 1;
          InvalidateRect(hWnd, NULL, TRUE);                  
          break;
 
@@ -450,6 +454,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
          case VK_RIGHT:
                     
             if (caretColumn < textColumns) caretColumn++;
+
+			if (caretColumn * 8 > width && caretColumn < textColumns)
+        
+			{
+				textPosX += 8; // 한 칸씩 좌측으로 이동
+				SetCaretPos(textPosX, textPosY); // 캐럿 위치 업데이트      
+			}
             break;
 
          case VK_UP:
@@ -490,7 +501,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   caretColumn = currentRowLength;
                else   
                   caretColumn = currentRowLength;
-            }   
+            }
+						
+			if(caretRow*16 > height)
+			
+			{
+				textPosY += 16;
+				SetCaretPos(textPosX, textPosY);
+			}
             break;
 
          case VK_PRIOR: // 페이지 업
@@ -664,11 +682,6 @@ case WM_CHAR:
        마찬가지로 위로 올릴때 특정 값 만큼 위로 올리고 0이상으로는 안올라가게 
        */
 
-		 //if(textRows*16 > height)
-   //    {
-   //       textPosY += 16;
-   //    }
-
        if(caretColumn*8 > width)
        {
           // 현재 위치에서 화면을 오른쪽으로 8픽셀 이동
@@ -682,42 +695,6 @@ case WM_CHAR:
           InvalidateRect(hWnd, NULL, TRUE);
           UpdateWindow(hWnd);
        }
-       //if(caretColumn = )
-       //{
-         // // 현재 위치에서 화면을 오른쪽으로 8픽셀 이동
-         // textPosX -= 8;
-
-         // //// Caret 위치 업데이트
-         // //GetCaretPos(&CaretP);
-         // //SetCaretPos(CaretP.x + 8, CaretP.y);
-
-         // // 화면 재그리기
-         // InvalidateRect(hWnd, NULL, TRUE);
-         // UpdateWindow(hWnd);
-       //}
-
-
-
-
-
-
-
-       //if(caretRow < 0)
-       //{
-         // // 현재 위치에서 화면을 오른쪽으로 8픽셀 이동
-         // textPosX -= 8;
-
-         // //// Caret 위치 업데이트
-         // //GetCaretPos(&CaretP);
-         // //SetCaretPos(CaretP.x + 8, CaretP.y);
-
-         // // 화면 재그리기
-         // InvalidateRect(hWnd, NULL, TRUE);
-         // UpdateWindow(hWnd);
-       //}
-              
-
-           
          // NULL 문자를 추가 << 이 줄 넣으니 첫 줄에 이상한 단어 들어가는 현상 사라짐
          // TEXTOut() 함수는 출력할 문자와 그 문자열으 길이를 인자로 받음 하지만 이때 문자열의 길이를 정학하게 알아야함.
          // 그래서 NULL을 통해 끝을 맺어줘야 길이를 알 수 있기에 NULL값 을 넣어주는 코드로 해결
