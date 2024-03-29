@@ -10,6 +10,7 @@ POINT startPoint = {0, 0};
 POINT endPoint = {0, 0};
 POINT prevEndPoint = {0, 0}; // 이전의 끝점을 저장하는 변수 추가
 BOOL isDrawing = FALSE;
+BOOL isEraser = FALSE;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCmdShow)
 {
@@ -66,8 +67,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             endPoint.y = HIWORD(lParam);
             InvalidateRect(hwnd, NULL, FALSE);
         }
+		if (isEraser)
+		{
+            prevEndPoint = endPoint; // 이전 끝점을 현재 끝점으로 갱신
+            endPoint.x = LOWORD(lParam);
+            endPoint.y = HIWORD(lParam);
+            InvalidateRect(hwnd, NULL, FALSE);
+		}
         break;
 
+		//LEFT : 그리기 RIGHT : 지우기
     case WM_LBUTTONDOWN:
         startPoint.x = endPoint.x = LOWORD(lParam);
         startPoint.y = endPoint.y = HIWORD(lParam);
@@ -77,6 +86,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_LBUTTONUP:
         isDrawing = FALSE;
+        break;
+
+	    
+	case WM_RBUTTONDOWN:
+		isEraser = TRUE;
+		startPoint.x = endPoint.x = LOWORD(lParam);
+        startPoint.y = endPoint.y = HIWORD(lParam);
+        prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
+        break;
+
+    case WM_RBUTTONUP:
+		isEraser = FALSE;
         break;
 
     case WM_COMMAND:
@@ -120,6 +141,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             LineTo(hdc, endPoint.x, endPoint.y);
             DeleteObject(hPen);
         }
+
+		if(isEraser)
+		{
+            HPEN hPen = CreatePen(PS_SOLID, 10, RGB(255,255,255));
+            SelectObject(hdc, hPen);
+            MoveToEx(hdc, prevEndPoint.x, prevEndPoint.y, NULL); // 이전 끝점부터 시작
+            LineTo(hdc, endPoint.x, endPoint.y);
+            DeleteObject(hPen);
+		}
 
         EndPaint(hwnd, &ps);
         break;
