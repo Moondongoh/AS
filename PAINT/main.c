@@ -12,8 +12,11 @@ POINT prevEndPoint = {0, 0}; // 이전의 끝점을 저장하는 변수 추가
 BOOL isDrawing = FALSE;
 BOOL isEraser = FALSE;
 
+int cWidth; //지우개 크기 변수
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCmdShow)
 {
+
     HWND hwnd;
     MSG msg;
     WNDCLASS WndClass;
@@ -59,6 +62,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
     switch (iMsg)
     {
+	case WM_CREATE:
+        break;
+
     case WM_MOUSEMOVE:
         if (isDrawing)
         {
@@ -127,6 +133,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             LineColor = RGB(0, 0, 0);
             InvalidateRect(hwnd, NULL, FALSE);
             break;
+			        
+		case ID_SIZE_10:
+            cWidth = 10;
+            InvalidateRect(hwnd, NULL, FALSE);
+            break;
+					
+		case ID_SIZE_20:
+            cWidth = 20;
+            InvalidateRect(hwnd, NULL, FALSE);
+            break;
+					
+		case ID_SIZE_30:
+            cWidth = 30;
+            InvalidateRect(hwnd, NULL, FALSE);
+            break;
         }
         break;
 
@@ -144,7 +165,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 		if(isEraser)
 		{
-            HPEN hPen = CreatePen(PS_SOLID, 10, RGB(255,255,255));
+            HPEN hPen = CreatePen(PS_SOLID, cWidth, RGB(255,255,255));
             SelectObject(hdc, hPen);
             MoveToEx(hdc, prevEndPoint.x, prevEndPoint.y, NULL); // 이전 끝점부터 시작
             LineTo(hdc, endPoint.x, endPoint.y);
@@ -157,6 +178,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+
     }
 
     return DefWindowProc(hwnd, iMsg, wParam, lParam);
