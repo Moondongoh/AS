@@ -14,6 +14,14 @@ BOOL isEraser = FALSE;
 
 int cWidth; //지우개 크기 변수
 
+// 백 버퍼 관련 변수
+HDC hdcBuffer = NULL;
+HBITMAP hBitmapBuffer = NULL;
+HBITMAP hBitmapOld = NULL;
+HBRUSH hWhiteBrush; // 백 버퍼를 하얀색으로 채우기 위한 브러시
+RECT rect; // 백 버퍼 크기를 정의하는 사각형
+//
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCmdShow)
 {
 
@@ -51,6 +59,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+	    
+	// 메시지 루프가 종료되면, 백 버퍼 관련 리소스 해제
+    if (hBitmapOld != NULL)
+        SelectObject(hdcBuffer, hBitmapOld);
+    if (hBitmapBuffer != NULL)
+        DeleteObject(hBitmapBuffer);
+    if (hdcBuffer != NULL)
+        DeleteDC(hdcBuffer);
+	//
+
     return (int)msg.wParam;
 }
 
@@ -63,23 +81,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     switch (iMsg)
     {
 	case WM_CREATE:
+		// 백 버퍼 초기화
+        hdcBuffer = CreateCompatibleDC(NULL);
+        hBitmapBuffer = CreateCompatibleBitmap(GetDC(hwnd), 1920, 1080);
+        hBitmapOld = (HBITMAP)SelectObject(hdcBuffer, hBitmapBuffer);
+
+		// 백 버퍼 전체를 하얀색으로 채우기
+        hWhiteBrush = CreateSolidBrush(RGB(255, 255, 255));
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = 1920;
+        rect.bottom = 1080;
+        FillRect(hdcBuffer, &rect, hWhiteBrush);
         break;
 
     case WM_MOUSEMOVE:
-        if (isDrawing)
+        if (isDrawing || isEraser)
         {
             prevEndPoint = endPoint; // 이전 끝점을 현재 끝점으로 갱신
             endPoint.x = LOWORD(lParam);
             endPoint.y = HIWORD(lParam);
             InvalidateRect(hwnd, NULL, FALSE);
         }
-		if (isEraser)
-		{
-            prevEndPoint = endPoint; // 이전 끝점을 현재 끝점으로 갱신
-            endPoint.x = LOWORD(lParam);
-            endPoint.y = HIWORD(lParam);
-            InvalidateRect(hwnd, NULL, FALSE);
-		}
         break;
 
 		//LEFT : 그리기 RIGHT : 지우기
@@ -154,28 +177,36 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
-
-        if (isDrawing)
-        {
-            HPEN hPen = CreatePen(PS_SOLID, 1, LineColor);
-            SelectObject(hdc, hPen);
-            MoveToEx(hdc, prevEndPoint.x, prevEndPoint.y, NULL); // 이전 끝점부터 시작
-            LineTo(hdc, endPoint.x, endPoint.y);
-            DeleteObject(hPen);
-        }
-
-		if(isEraser)
+    
 		{
-            HPEN hPen = CreatePen(PS_SOLID, cWidth, RGB(255,255,255));
-            SelectObject(hdc, hPen);
-            MoveToEx(hdc, prevEndPoint.x, prevEndPoint.y, NULL); // 이전 끝점부터 시작
-            LineTo(hdc, endPoint.x, endPoint.y);
-            DeleteObject(hPen);
-		}
+			HDC hdc = BeginPaint(hwnd, &ps);
 
-        EndPaint(hwnd, &ps);
-        break;
+			// 백 버퍼에 그림을 그림
+			HBRUSH hBrush;
+			if (isEraser)
+				hBrush = CreateSolidBrush(RGB(255, 255, 255)); // 지우개는 흰색으로 설정
+			else
+				hBrush = CreateSolidBrush(LineColor);
+			SelectObject(hdcBuffer, hBrush);
+        
+			if (isDrawing || isEraser)
+			{
+				if (isEraser)
+					SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, RGB(255, 255, 255))); // 펜 없이 그리기
+				else
+					SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, LineColor)); // 펜 선택
+				MoveToEx(hdcBuffer, prevEndPoint.x, prevEndPoint.y, NULL);
+				LineTo(hdcBuffer, endPoint.x, endPoint.y);
+			}
+			DeleteObject(hBrush);
+
+			// 백 버퍼에 그린 그림을 화면에 복사
+			BitBlt(hdc, 0, 0, 1920, 1080, hdcBuffer, 0, 0, SRCCOPY);
+        
+			EndPaint(hwnd, &ps);
+		}
+		break;
+
 
     case WM_DESTROY:
         PostQuitMessage(0);
