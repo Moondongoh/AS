@@ -27,13 +27,17 @@
 #define ID_SIZE_10                      40022
 #define ID_SIZE_20                      40023
 #define ID_SIZE_30                      40024
+#define ID_FILE_PAINT_NEW               40025
+#define ID_FILE_NEW_PAINT_WINDOW        40026
+#define ID_FILE_PAINT_OPEN              40027
+#define ID_FILE_PAINT_SAVE              40028
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102
-#define _APS_NEXT_COMMAND_VALUE         40025
+#define _APS_NEXT_COMMAND_VALUE         40029
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
