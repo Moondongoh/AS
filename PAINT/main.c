@@ -109,6 +109,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
+        // 선 색상
         case ID_RED:
             LineColor = RGB(255, 0, 0);
             InvalidateRect(hwnd, NULL, FALSE);
@@ -133,7 +134,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             LineColor = RGB(0, 0, 0);
             InvalidateRect(hwnd, NULL, FALSE);
             break;
-			        
+
+        // 이 지우개 사이즈  
 		case ID_SIZE_10:
             cWidth = 10;
             InvalidateRect(hwnd, NULL, FALSE);
