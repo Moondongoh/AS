@@ -21,13 +21,19 @@
 #define ID_YELLOW                       40016
 #define ID_GREEN                        40017
 #define ID_BLACK                        40018
+#define ID_40019                        40019
+#define ID_40020                        40020
+#define ID_40021                        40021
+#define ID_SIZE_10                      40022
+#define ID_SIZE_20                      40023
+#define ID_SIZE_30                      40024
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102
-#define _APS_NEXT_COMMAND_VALUE         40019
+#define _APS_NEXT_COMMAND_VALUE         40025
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
