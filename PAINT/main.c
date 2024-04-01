@@ -22,6 +22,7 @@ POINT endPoint = {0, 0};
 POINT prevEndPoint = {0, 0}; // 이전의 끝점을 저장하는 변수 추가
 BOOL isDrawing = FALSE;
 BOOL isEraser = FALSE;
+BOOL isRect = FALSE;
 
 int cWidth; //지우개 크기 변수
 
@@ -203,6 +204,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hwnd);
 			break;
 
+		case ID_Rectangle:
+			isRect = TRUE;
+			break;
+
+		case ID_Line:
+			isDrawing = TRUE;
+			isRect = FALSE;
+			break;
         }
         break;
 
@@ -211,6 +220,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		{
 			HDC hdc = BeginPaint(hwnd, &ps);
 			
+
 			// 백 버퍼에 그림을 그림
 			HBRUSH hBrush;
 			if (isEraser)
@@ -233,6 +243,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			// 백 버퍼에 그린 그림을 화면에 복사
 			BitBlt(hdc, 0, 0, 1920, 1080, hdcBuffer, 0, 0, SRCCOPY);
         
+		if (isRect) // 사각형 그리기 모드인 경우
+    {
+        // 사각형 그리기
+        Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+    }
 			EndPaint(hwnd, &ps);
 		}
 		break;
