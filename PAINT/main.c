@@ -21,8 +21,10 @@ POINT startPoint = {0, 0};
 POINT endPoint = {0, 0};
 POINT prevEndPoint = {0, 0}; // 이전의 끝점을 저장하는 변수 추가
 BOOL isDrawing = FALSE;
+BOOL isDrawing_2 = FALSE;
 BOOL isEraser = FALSE;
 BOOL isRect = FALSE;
+BOOL isEllipse = FALSE;
 
 int cWidth; //지우개 크기 변수
 
@@ -188,7 +190,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 		case ID_FILE_PAINT_NEW:
 			FillRect(hdcBuffer, &rect, hWhiteBrush);
-			InvalidateRect(hwnd, NULL, FALSE);
+			InvalidateRect(hwnd, NULL, TRUE);
+			isDrawing = FALSE;
+			isDrawing_2 = FALSE;
+			isRect = FALSE;
+			isEllipse = FALSE;
 			break;
 
 		case ID_FILE_NEW_PAINT_WINDOW:
@@ -206,12 +212,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 		case ID_Rectangle:
 			isRect = TRUE;
+			isDrawing = FALSE;
+			isEraser = FALSE;
 			break;
 
 		case ID_Line:
-			isDrawing = TRUE;
+			isDrawing_2 = TRUE;
 			isRect = FALSE;
+			isEllipse = FALSE;
 			break;
+
+		case ID_Ellipse:
+			isEllipse = TRUE;
+			isDrawing = FALSE;
+			isEraser = FALSE;
+			isRect =FALSE;
+			break;
+
         }
         break;
 
@@ -229,10 +246,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				hBrush = CreateSolidBrush(LineColor);
 			SelectObject(hdcBuffer, hBrush);
         
-			if (isDrawing || isEraser)
+			if (isDrawing || isEraser || isRect || isEllipse || isDrawing_2)
 			{
 				if (isEraser)
 					SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, RGB(255, 255, 255))); // 펜 없이 그리기
+				else if(isRect)
+					Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+				else if(isEllipse)
+					Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+				else if(isDrawing_2)
+				{
+					isDrawing = TRUE;
+				}
 				else
 					SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, LineColor)); // 펜 선택
 				MoveToEx(hdcBuffer, prevEndPoint.x, prevEndPoint.y, NULL);
@@ -242,12 +267,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 			// 백 버퍼에 그린 그림을 화면에 복사
 			BitBlt(hdc, 0, 0, 1920, 1080, hdcBuffer, 0, 0, SRCCOPY);
-        
-		if (isRect) // 사각형 그리기 모드인 경우
-    {
-        // 사각형 그리기
-        Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
-    }
+
 			EndPaint(hwnd, &ps);
 		}
 		break;
