@@ -121,15 +121,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 		//LEFT : 그리기 RIGHT : 지우기
     case WM_LBUTTONDOWN:
-        startPoint.x = endPoint.x = LOWORD(lParam);
+        startPoint.x = endPoint.x= LOWORD(lParam);
         startPoint.y = endPoint.y = HIWORD(lParam);
         prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
         isDrawing = TRUE;
         break;
 
     case WM_LBUTTONUP:
-        isDrawing = FALSE;
-        break;
+		isDrawing = FALSE;
+		break;
+
+	case WM_MBUTTONDOWN:
+		startPoint.x = LOWORD(lParam);
+    
+		startPoint.y = HIWORD(lParam);
+    
+		isDrawing = FALSE;
+
+		break;
+			
+	case WM_MBUTTONUP:
+		endPoint.x = LOWORD(lParam);
+    
+		endPoint.y = HIWORD(lParam);
+    
+		isDrawing = FALSE;
+    
+		isEllipse = TRUE; // 원을 그리도록 플래그 설정
+    
+		InvalidateRect(hwnd, NULL, TRUE);
+		break;
+
 
 	    
 	case WM_RBUTTONDOWN:
@@ -214,6 +236,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			isRect = TRUE;
 			isDrawing = FALSE;
 			isEraser = FALSE;
+		    isEllipse = FALSE;
 			break;
 
 		case ID_Line:
@@ -245,16 +268,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			else
 				hBrush = CreateSolidBrush(LineColor);
 			SelectObject(hdcBuffer, hBrush);
-        
-			if (isDrawing || isEraser || isRect || isEllipse || isDrawing_2)
+
+			if (isEllipse)
+
+			{
+				Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+				isEllipse = FALSE; // 원을 그렸으므로 플래그를 false로 설정
+			}
+
+			else if (isDrawing || isEraser || isRect || isDrawing_2)
+
 			{
 				if (isEraser)
 					SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, RGB(255, 255, 255))); // 펜 없이 그리기
 				else if(isRect)
 					Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
-				else if(isEllipse)
-					Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
 				else if(isDrawing_2)
+    
 				{
 					isDrawing = TRUE;
 				}
@@ -262,7 +292,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 					SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, LineColor)); // 펜 선택
 				MoveToEx(hdcBuffer, prevEndPoint.x, prevEndPoint.y, NULL);
 				LineTo(hdcBuffer, endPoint.x, endPoint.y);
+
 			}
+
 			DeleteObject(hBrush);
 
 			// 백 버퍼에 그린 그림을 화면에 복사
