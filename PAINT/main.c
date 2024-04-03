@@ -14,6 +14,8 @@
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 
+void CreateNewPaintWindow(HINSTANCE hInstance);
+
 LPCTSTR lpszClass = TEXT("PAINT");
 
 COLORREF LineColor = 0x00000000;
@@ -108,21 +110,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         hBitmapOld = (HBITMAP)SelectObject(hdcBuffer, hBitmapBuffer);
 
 		// 백 버퍼 전체를 하얀색으로 채우기
-        hWhiteBrush = CreateSolidBrush(RGB(255, 255, 255));
+        
+		hWhiteBrush = CreateSolidBrush(RGB(255, 255, 255));
         rect.left = 0;
         rect.top = 0;
         rect.right = 1920;
         rect.bottom = 1080;
         FillRect(hdcBuffer, &rect, hWhiteBrush);
-		 isDrawing = FALSE;
- isDrawing_2 = FALSE;
- isEraser = FALSE;
- isRect = FALSE;
- isEllipse = FALSE;
+		isDrawing = FALSE;
+		isDrawing_2 = FALSE; 
+		isEraser = FALSE;
+		isRect = FALSE;
+		isEllipse = FALSE;
+		break;
 
-        break;
-
-    case WM_MOUSEMOVE:
+	case WM_MOUSEMOVE:
         if (isDrawing || isEraser)
         {
             prevEndPoint = endPoint; // 이전 끝점을 현재 끝점으로 갱신
@@ -134,11 +136,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 		//LEFT : 그리기 RIGHT : 지우기
     case WM_LBUTTONDOWN:
-        //startPoint.x = endPoint.x= LOWORD(lParam);
-        //startPoint.y = endPoint.y = HIWORD(lParam);
-        //prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
-        //isDrawing = TRUE;
-
 		if(isRect == TRUE)
 		{
 		startPoint.x = endPoint.x= LOWORD(lParam);
@@ -147,6 +144,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		isDrawing = FALSE;
 		//TextOut(hdcBuffer,100,100,L"TEST",4);
 		}
+
 		else if(isEllipse == TRUE)
 		{
 		startPoint.x = endPoint.x= LOWORD(lParam);
@@ -154,6 +152,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
 		isDrawing = FALSE;
 		}
+
+		else if(isDrawing_2 ==TRUE)
+		{
+		startPoint.x = endPoint.x= LOWORD(lParam);
+        startPoint.y = endPoint.y = HIWORD(lParam);
+        prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
+        isDrawing = TRUE;
+		}
+
 		else
 		{
 		startPoint.x = endPoint.x= LOWORD(lParam);
@@ -164,7 +171,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_LBUTTONUP:
-		/*isDrawing = FALSE;*/
 		if(isRect == TRUE)
 		{	
 			endPoint.x = LOWORD(lParam);
@@ -173,6 +179,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			isRect = TRUE;
 			InvalidateRect(hwnd, NULL, TRUE);
 		}
+
 		else if(isEllipse == TRUE)
 		{
 	
@@ -183,10 +190,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			isEllipse = TRUE;
 			InvalidateRect(hwnd, NULL, TRUE);
 		}
+
+		else if(isDrawing_2 == TRUE)
+		{
+		isDrawing = FALSE;
+		}
+
 		else
 		{
 			isDrawing = FALSE;
 		}
+
 		break;
 
 	//case WM_MBUTTONDOWN:
@@ -275,6 +289,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			FullColor = RGB(0, 0, 0);
 			isBlack = TRUE;
 			break;
+
 		case ID_Full_Zero:
 			isRed = FALSE;
 			isBlue =FALSE;
@@ -283,7 +298,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			isBlack =FALSE;
 			break;
 
-        // 이 지우개 사이즈  
+        // 작업 사이즈  
 		case ID_SIZE_10:
             cWidth = 10;
             InvalidateRect(hwnd, NULL, FALSE);
@@ -309,6 +324,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case ID_FILE_NEW_PAINT_WINDOW:
+			CreateNewPaintWindow(GetModuleHandle(NULL));
 			break;
 
 		case ID_FILE_PAINT_OPEN:
@@ -399,7 +415,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 			}
 
-
 			DeleteObject(hBrush);
 
 			// 백 버퍼에 그린 그림을 화면에 복사
@@ -417,4 +432,46 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     }
 
     return DefWindowProc(hwnd, iMsg, wParam, lParam);
+}
+
+void CreateNewPaintWindow(HINSTANCE hInstance)
+{
+    HWND newHwnd;
+    MSG newMsg;
+    WNDCLASS newWndClass;
+
+    // 새로운 윈도우 클래스를 등록합니다.
+    newWndClass.style = CS_HREDRAW | CS_VREDRAW;
+    newWndClass.lpfnWndProc = WndProc;
+    newWndClass.cbClsExtra = 0;
+    newWndClass.cbWndExtra = 0;
+    newWndClass.hInstance = hInstance;
+    newWndClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    newWndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    newWndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    newWndClass.lpszMenuName = NULL;
+    newWndClass.lpszClassName = TEXT("NEW_PAINT_WINDOW");
+    RegisterClass(&newWndClass);
+
+    // 새로운 윈도우를 생성합니다.
+    newHwnd = CreateWindow(TEXT("NEW_PAINT_WINDOW"),
+                            TEXT("New Paint Window"),
+                            WS_OVERLAPPEDWINDOW,
+                            CW_USEDEFAULT,
+                            CW_USEDEFAULT,
+                            600,
+                            400,
+                            NULL,
+                            LoadMenu(hInstance, MAKEINTRESOURCE(IDR_MENU1)),
+                            hInstance,
+                            NULL);
+    ShowWindow(newHwnd, SW_SHOW);
+    UpdateWindow(newHwnd);
+
+    // 새로운 윈도우의 메시지 루프를 실행합니다.
+    while (GetMessage(&newMsg, NULL, 0, 0))
+    {
+        TranslateMessage(&newMsg);
+        DispatchMessage(&newMsg);
+    }
 }
