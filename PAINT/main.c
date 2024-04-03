@@ -17,6 +17,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 LPCTSTR lpszClass = TEXT("PAINT");
 
 COLORREF LineColor = 0x00000000;
+COLORREF FullColor = 0x00000000;
 POINT startPoint = {0, 0};
 POINT endPoint = {0, 0};
 POINT prevEndPoint = {0, 0}; // 이전의 끝점을 저장하는 변수 추가
@@ -25,6 +26,12 @@ BOOL isDrawing_2 = FALSE;
 BOOL isEraser = FALSE;
 BOOL isRect = FALSE;
 BOOL isEllipse = FALSE;
+BOOL isRed = FALSE;
+BOOL isBlue = FALSE;
+BOOL isYellow = FALSE;
+BOOL isGreen = FALSE;
+BOOL isBlack= FALSE;
+BOOL isZero= FALSE;
 
 int cWidth; //지우개 크기 변수
 
@@ -107,6 +114,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         rect.right = 1920;
         rect.bottom = 1080;
         FillRect(hdcBuffer, &rect, hWhiteBrush);
+		 isDrawing = FALSE;
+ isDrawing_2 = FALSE;
+ isEraser = FALSE;
+ isRect = FALSE;
+ isEllipse = FALSE;
+
         break;
 
     case WM_MOUSEMOVE:
@@ -121,40 +134,84 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 		//LEFT : 그리기 RIGHT : 지우기
     case WM_LBUTTONDOWN:
-        startPoint.x = endPoint.x= LOWORD(lParam);
+        //startPoint.x = endPoint.x= LOWORD(lParam);
+        //startPoint.y = endPoint.y = HIWORD(lParam);
+        //prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
+        //isDrawing = TRUE;
+
+		if(isRect == TRUE)
+		{
+		startPoint.x = endPoint.x= LOWORD(lParam);
+        startPoint.y = endPoint.y = HIWORD(lParam);
+        prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
+		isDrawing = FALSE;
+		//TextOut(hdcBuffer,100,100,L"TEST",4);
+		}
+		else if(isEllipse == TRUE)
+		{
+		startPoint.x = endPoint.x= LOWORD(lParam);
+        startPoint.y = endPoint.y = HIWORD(lParam);
+        prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
+		isDrawing = FALSE;
+		}
+		else
+		{
+		startPoint.x = endPoint.x= LOWORD(lParam);
         startPoint.y = endPoint.y = HIWORD(lParam);
         prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
         isDrawing = TRUE;
+		}
         break;
 
     case WM_LBUTTONUP:
-		isDrawing = FALSE;
+		/*isDrawing = FALSE;*/
+		if(isRect == TRUE)
+		{	
+			endPoint.x = LOWORD(lParam);
+			endPoint.y = HIWORD(lParam);		
+			isDrawing = FALSE;		
+			isRect = TRUE;
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+		else if(isEllipse == TRUE)
+		{
+	
+			endPoint.x = LOWORD(lParam);
+			endPoint.y = HIWORD(lParam);
+			isDrawing = FALSE;
+			isDrawing_2 = FALSE;
+			isEllipse = TRUE;
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+		else
+		{
+			isDrawing = FALSE;
+		}
 		break;
 
-	case WM_MBUTTONDOWN:
-		startPoint.x = LOWORD(lParam);
-    
-		startPoint.y = HIWORD(lParam);
-    
-		isDrawing = FALSE;
+	//case WM_MBUTTONDOWN:
+	//	startPoint.x = LOWORD(lParam);
+ //   
+	//	startPoint.y = HIWORD(lParam);
+ //   
+	//	isDrawing = FALSE;
 
-		break;
-			
-	case WM_MBUTTONUP:
-		endPoint.x = LOWORD(lParam);
-    
-		endPoint.y = HIWORD(lParam);
-    
-		isDrawing = FALSE;
-    
-		isEllipse = TRUE; // 원을 그리도록 플래그 설정
-    
-		InvalidateRect(hwnd, NULL, TRUE);
-		break;
-
-
+	//	break;
+	//		
+	//case WM_MBUTTONUP:
+	//	endPoint.x = LOWORD(lParam);
+ //   
+	//	endPoint.y = HIWORD(lParam);
+ //   
+	//	isDrawing = FALSE;
+ //   
+	//	isEllipse = TRUE; // 원을 그리도록 플래그 설정
+ //   
+	//	InvalidateRect(hwnd, NULL, TRUE);
+	//	break;
 	    
 	case WM_RBUTTONDOWN:
+		isDrawing = FALSE;
 		isEraser = TRUE;
 		startPoint.x = endPoint.x = LOWORD(lParam);
         startPoint.y = endPoint.y = HIWORD(lParam);
@@ -193,6 +250,38 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             LineColor = RGB(0, 0, 0);
             InvalidateRect(hwnd, NULL, FALSE);
             break;
+
+		case ID_Full_Red:
+			FullColor = RGB(255, 0, 0);
+			isRed = TRUE;
+			break;
+
+		case ID_Full_Blue:
+			FullColor = RGB(0, 0, 255);
+			isBlue = TRUE;
+			break;
+
+		case ID_Full_Yellow:
+			FullColor = RGB(255, 255, 0);
+			isYellow = TRUE;
+			break;
+
+		case ID_Full_Green:
+			FullColor = RGB(0, 255, 0);
+			isGreen = TRUE;
+			break;
+
+		case ID_Full_Black:
+			FullColor = RGB(0, 0, 0);
+			isBlack = TRUE;
+			break;
+		case ID_Full_Zero:
+			isRed = FALSE;
+			isBlue =FALSE;
+			isYellow =FALSE;
+			isGreen =FALSE;
+			isBlack =FALSE;
+			break;
 
         // 이 지우개 사이즈  
 		case ID_SIZE_10:
@@ -235,6 +324,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		case ID_Rectangle:
 			isRect = TRUE;
 			isDrawing = FALSE;
+			isDrawing= FALSE;
 			isEraser = FALSE;
 		    isEllipse = FALSE;
 			break;
@@ -265,24 +355,38 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			HBRUSH hBrush;
 			if (isEraser)
 				hBrush = CreateSolidBrush(RGB(255, 255, 255)); // 지우개는 흰색으로 설정
-			else
-				hBrush = CreateSolidBrush(LineColor);
-			SelectObject(hdcBuffer, hBrush);
+			else if(isRed || isBlue || isYellow || isGreen || isBlack)
+			{
+				            
+				hBrush = CreateSolidBrush(FullColor);
+				SelectObject(hdcBuffer, hBrush);
 
+			}
+			else
+			{
+				hBrush =  (HBRUSH)GetStockObject(NULL_BRUSH);
+			SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, LineColor));
+			(HBRUSH)SelectObject(hdcBuffer, hBrush);//---------------------------이거임
+			}
+			
 			if (isEllipse)
 
 			{
+				isDrawing = FALSE;
 				Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
 				isEllipse = FALSE; // 원을 그렸으므로 플래그를 false로 설정
 			}
 
-			else if (isDrawing || isEraser || isRect || isDrawing_2)
+			if (isRect)
+			{
+				Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+				isRect = FALSE;
+			}
+			else if (isDrawing || isEraser || isDrawing_2)
 
 			{
 				if (isEraser)
 					SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, RGB(255, 255, 255))); // 펜 없이 그리기
-				else if(isRect)
-					Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
 				else if(isDrawing_2)
     
 				{
@@ -294,6 +398,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				LineTo(hdcBuffer, endPoint.x, endPoint.y);
 
 			}
+
 
 			DeleteObject(hBrush);
 
