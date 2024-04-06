@@ -1,3 +1,14 @@
+\/*
+[END]1. 윈도우 창을 생성한다.
+[ING]>> 상단 툴바에 파일 서식 작업 크기가 있으며 각 기능들 추가 중이다.
+[ING]1-1. 새로 만들기, 새 창, 저장 및 열기, 끝내기 기능 추가 할 예정
+[ING]++ 툴바에 도형 칸 넣고 도형 그리기 추가 할 예정
+[END]2. 마우스 좌 클릭 시 그리기 가능하다.
+[END]3. 마우스 우 클릭 시 지우기 가능하다.
+[END]4. 작업 영역(1920*1080)을 가지면 백 버퍼릉 만들어 더블 버퍼링 사용 중이다.
+[ING]5. 스크롤 기능? 
+[ING]6. 작업 영역에 격자 넣기?
+*/
 #include <windows.h>
 #include <windef.h>
 #include "resource.h"
@@ -244,6 +255,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             isYellow =FALSE;
             isGreen =FALSE;
             isBlack =FALSE;
+			isZero = TRUE;
             break;
 
         // 작업 사이즈  
@@ -318,15 +330,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             if (isEraser)
                 hBrush = CreateSolidBrush(RGB(255, 255, 255)); // 지우개는 흰색으로 설정
             else if(isRed || isBlue || isYellow || isGreen || isBlack)
-            {
-                            
+            {       
                 hBrush = CreateSolidBrush(FullColor);
                 SelectObject(hdcBuffer, hBrush);
             }
-            else
+
+            else 
             {
                 hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
-                SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, LineColor));
+                SelectObject(hdcBuffer, hBrush);
             }
 
             if (isEllipse)
