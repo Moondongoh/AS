@@ -1,4 +1,4 @@
-\/*
+/*
 [END]1. 윈도우 창을 생성한다.
 [ING]>> 상단 툴바에 파일 서식 작업 크기가 있으며 각 기능들 추가 중이다.
 [ING]1-1. 새로 만들기, 새 창, 저장 및 열기, 끝내기 기능 추가 할 예정
@@ -300,7 +300,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case ID_Rectangle:
             isRect = TRUE;
             isDrawing = FALSE;
-            isDrawing= FALSE;
+            isDrawing_2= FALSE;
             isEraser = FALSE;
             isEllipse = FALSE;
             break;
@@ -314,6 +314,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case ID_Ellipse:
             isEllipse = TRUE;
             isDrawing = FALSE;
+			isDrawing_2= FALSE;
             isEraser = FALSE;
             isRect =FALSE;
             break;
@@ -344,12 +345,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             if (isEllipse)
             {
                 isDrawing = FALSE;
+				FillRect(hdcBuffer, &rect, hWhiteBrush); // << 찾아보기
                 Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
                 isEllipse = TRUE; // 원을 그렸으므로 플래그를 false로 설정
             }
 
             if (isRect)
             {
+				FillRect(hdcBuffer, &rect, hWhiteBrush); // << 찾아보기
                 Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
                 isRect = TRUE; // TRUE 로 변경
             }
