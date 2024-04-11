@@ -132,6 +132,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         if (wParam == MK_LBUTTON ||wParam == MK_RBUTTON ){ // 이건 클릭 중인지 확인 -> 클릭중이면서 마우스 움직이면?
         if (isDrawing || isEraser || isRect || isEllipse)
         {
+			FillRect(hdcBuffer, &rect, hWhiteBrush);
             prevEndPoint = endPoint; // 이전 끝점을 현재 끝점으로 갱신
             endPoint.x = LOWORD(lParam);
             endPoint.y = HIWORD(lParam);
