@@ -15,36 +15,37 @@
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 
-void CreateNewPaintWindow(HINSTANCE hInstance); // 새 창열기 함수
+void CreateNewPaintWindow(HINSTANCE hInstance);
 
 LPCTSTR lpszClass = TEXT("PAINT");
 
 COLORREF LineColor = 0x00000000;
 COLORREF FullColor = 0x00000000;
+
 POINT startPoint = {0, 0};
 POINT endPoint = {0, 0};
-POINT prevEndPoint = {0, 0}; // 이전의 끝점을 저장하는 변수 추가
-BOOL isDrawing = FALSE;
-BOOL isDrawing_2 = FALSE;
-BOOL isEraser = FALSE;
-BOOL isRect = FALSE;
-BOOL isEllipse = FALSE;
-BOOL isRed = FALSE;
-BOOL isBlue = FALSE;
-BOOL isYellow = FALSE;
-BOOL isGreen = FALSE;
-BOOL isBlack= FALSE;
-BOOL isZero= FALSE;
+POINT prevEndPoint = {0, 0};	// 이전의 끝점을 저장하는 변수 추가
 
-int cWidth; //지우개 크기 변수
+BOOL isDrawing = FALSE;			// 기본 그리기
+BOOL isDrawing_2 = FALSE;		// 메뉴바 그리기
+BOOL isEraser = FALSE;			// 지우기
+BOOL isRect = FALSE;			// 사각형
+BOOL isEllipse = FALSE;			// 타원
+BOOL isRed = FALSE;				// 빨간색
+BOOL isBlue = FALSE;			// 파란색
+BOOL isYellow = FALSE;			// 노란색
+BOOL isGreen = FALSE;			// 초록색
+BOOL isBlack= FALSE;			// 검정색
+BOOL isZero= FALSE;				// 투명색
+
+int cWidth;						//지우개 크기 변수
 
 // 백 버퍼 관련 변수
 HDC hdcBuffer = NULL;
 HBITMAP hBitmapBuffer = NULL;
 HBITMAP hBitmapOld = NULL;
-HBRUSH hWhiteBrush; // 백 버퍼를 하얀색으로 채우기 위한 브러시
-RECT rect; // 백 버퍼 크기를 정의하는 사각형
-//
+HBRUSH hWhiteBrush;				// 백 버퍼를 하얀색으로 채우기 위한 브러시
+RECT rect;						// 백 버퍼 크기를 정의하는 사각형
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCmdShow)
 {
@@ -87,8 +88,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     // 메시지 루프가 종료되면, 백 버퍼 관련 리소스 해제
     if (hBitmapOld != NULL)
         SelectObject(hdcBuffer, hBitmapOld);
+
     if (hBitmapBuffer != NULL)
         DeleteObject(hBitmapBuffer);
+
     if (hdcBuffer != NULL)
         DeleteDC(hdcBuffer);
     //
@@ -100,8 +103,8 @@ HDC hdc;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
-    static HBITMAP hTempBitmap = NULL; // 임시 백 버퍼를 저장하기 위한 변수
-    static HDC hdcTemp = NULL; // 임시 백 버퍼의 DC를 저장하기 위한 변수
+    static HBITMAP hTempBitmap = NULL;								// 임시 백 버퍼를 저장하기 위한 변수
+    static HDC hdcTemp = NULL;										// 임시 백 버퍼의 DC를 저장하기 위한 변수
 
     PAINTSTRUCT ps;
 
@@ -112,28 +115,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         hdcBuffer = CreateCompatibleDC(NULL);
         hBitmapBuffer = CreateCompatibleBitmap(GetDC(hwnd), 1920, 1080);
         hBitmapOld = (HBITMAP)SelectObject(hdcBuffer, hBitmapBuffer);
+        hWhiteBrush = CreateSolidBrush(RGB(255, 255, 255));         // 백 버퍼 전체를 하얀색으로 채우기
 
-        // 백 버퍼 전체를 하얀색으로 채우기
-        
-        hWhiteBrush = CreateSolidBrush(RGB(255, 255, 255));
         rect.left = 0;
         rect.top = 0;
         rect.right = 1920;
         rect.bottom = 1080;
+
         FillRect(hdcBuffer, &rect, hWhiteBrush);
+
         isDrawing = FALSE;
         isDrawing_2 = FALSE; 
         isEraser = FALSE;
         isRect = FALSE;
         isEllipse = FALSE;
+
         break;
 
     case WM_MOUSEMOVE:
         if (wParam == MK_LBUTTON ||wParam == MK_RBUTTON ){ // 이건 클릭 중인지 확인 -> 클릭중이면서 마우스 움직이면?
         if (isDrawing || isEraser || isRect || isEllipse)
         {
-			FillRect(hdcBuffer, &rect, hWhiteBrush);
-            prevEndPoint = endPoint; // 이전 끝점을 현재 끝점으로 갱신
+            prevEndPoint = endPoint;						// 이전 끝점을 현재 끝점으로 갱신
             endPoint.x = LOWORD(lParam);
             endPoint.y = HIWORD(lParam);
             InvalidateRect(hwnd, NULL, FALSE);
@@ -145,26 +148,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     case WM_LBUTTONDOWN:
 		if(isRect == TRUE || isEllipse == TRUE)
 		{
+
         // 도형을 그릴 때마다 새로운 임시 백 버퍼를 생성
         if (hTempBitmap != NULL)
         {
             SelectObject(hdcTemp, hBitmapOld);
             DeleteObject(hTempBitmap);
         }
-        hdcTemp = CreateCompatibleDC(hdcBuffer);
-        hTempBitmap = CreateCompatibleBitmap(hdcBuffer, 1920, 1080);
-        hBitmapOld = (HBITMAP)SelectObject(hdcTemp, hTempBitmap);
+
+        hdcTemp = CreateCompatibleDC(hdcBuffer);							// 임시 DC생성
+        hTempBitmap = CreateCompatibleBitmap(hdcBuffer, 1920, 1080);		// 화면 크기랑 동일한 사이즈
+        hBitmapOld = (HBITMAP)SelectObject(hdcTemp, hTempBitmap);			// 임시 DC로 선택
 
         // 현재 화면을 임시 백 버퍼에 복사
-
         BitBlt(hdcTemp, 0, 0, 1920, 1080, hdcBuffer, 0, 0, SRCCOPY);
 		}
+
         // 현재 마우스 위치를 시작점으로 설정
         startPoint.x = endPoint.x = LOWORD(lParam);
         startPoint.y = endPoint.y = HIWORD(lParam);
-        prevEndPoint = startPoint; // 이전 끝점을 현재 시작점으로 설정
+        prevEndPoint = startPoint;											// 이전 끝점을 현재 시작점으로 설정
 
-        // 도형 그리기 시작
+        // 선 그리기 시작
         isDrawing = TRUE;
         break;
 
@@ -279,6 +284,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             InvalidateRect(hwnd, NULL, FALSE);
             break;
 
+		// 새로 만들기
         case ID_FILE_PAINT_NEW:
             FillRect(hdcBuffer, &rect, hWhiteBrush);
             InvalidateRect(hwnd, NULL, TRUE);
@@ -287,14 +293,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             isRect = FALSE;
             isEllipse = FALSE;
             break;
-
+		
+		// 새 창 열기
         case ID_FILE_NEW_PAINT_WINDOW:
             CreateNewPaintWindow(GetModuleHandle(NULL));
             break;
-
+		
+		// 열기
         case ID_FILE_PAINT_OPEN:
             break;
 
+		// 저장
         case ID_FILE_PAINT_SAVE:
             break;
 
@@ -302,6 +311,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             DestroyWindow(hwnd);
             break;
 
+		// 메뉴바 사각형 그리기
         case ID_Rectangle:
             isRect = TRUE;
             isDrawing = FALSE;
@@ -310,12 +320,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             isEllipse = FALSE;
             break;
 
+		// 메뉴바 선 그리기
         case ID_Line:
             isDrawing_2 = TRUE;
             isRect = FALSE;
             isEllipse = FALSE;
             break;
 
+		// 메뉴바 원 그리기
         case ID_Ellipse:
             isEllipse = TRUE;
             isDrawing = FALSE;
@@ -335,6 +347,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             HBRUSH hBrush;
             if (isEraser)
                 hBrush = CreateSolidBrush(RGB(255, 255, 255)); // 지우개는 흰색으로 설정
+
             else if(isRed || isBlue || isYellow || isGreen || isBlack)
             {       
                 hBrush = CreateSolidBrush(FullColor);
@@ -352,21 +365,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
                 isDrawing = FALSE;
 				//FillRect(hdcBuffer, &rect, hWhiteBrush);
                 Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
-                isEllipse = TRUE; // 원을 그렸으므로 플래그를 false로 설정
+                isEllipse = TRUE;
             }
 
             if (isRect)
             {
 				//FillRect(hdcBuffer, &rect, hWhiteBrush);
                 Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
-                isRect = TRUE; // TRUE 로 변경
+                isRect = TRUE;
             }
+
             else if (isDrawing || isEraser || isDrawing_2)
             {
                 if (isEraser)
                     SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, RGB(255, 255, 255))); // 펜 없이 그리기
+
                 else if(isDrawing_2)
                     isDrawing = TRUE;
+
                 else
                     SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, LineColor)); // 펜 선택
                 MoveToEx(hdcBuffer, prevEndPoint.x, prevEndPoint.y, NULL);
