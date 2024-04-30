@@ -16,6 +16,8 @@
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 
 void CreateNewPaintWindow(HINSTANCE hInstance);
+bool trySave(HWND hwnd);
+bool tryOpen(HWND hwnd);
 
 LPCTSTR lpszClass = TEXT("PAINT");
 
@@ -134,13 +136,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_MOUSEMOVE:
         if (wParam == MK_LBUTTON ||wParam == MK_RBUTTON ){ // 이건 클릭 중인지 확인 -> 클릭중이면서 마우스 움직이면?
-        if (isDrawing || isEraser || isRect || isEllipse)
-        {
-            prevEndPoint = endPoint;						// 이전 끝점을 현재 끝점으로 갱신
-            endPoint.x = LOWORD(lParam);
-            endPoint.y = HIWORD(lParam);
-            InvalidateRect(hwnd, NULL, FALSE);
-        }
+            if (isDrawing || isEraser || isRect || isEllipse) {
+                prevEndPoint = endPoint; // 이전 끝점을 현재 끝점으로 갱신
+                endPoint.x = LOWORD(lParam);
+                endPoint.y = HIWORD(lParam);
+                InvalidateRect(hwnd, NULL, FALSE);
+            }
         }
         break;
 
@@ -300,11 +301,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             break;
 		
 		// 열기
-        case ID_FILE_PAINT_OPEN:
+        case ID_FILE_NEW_PAINT_OPEN:
+            if (!tryOpen(hwnd)) {
+                MessageBox(hwnd, "파일 열기 실패!", "오류", MB_OK);
+            }
             break;
 
 		// 저장
-        case ID_FILE_PAINT_SAVE:
+        case ID_FILE_NEW_PAINT_SAVE:
+            if (!trySave(hwnd)) {
+                MessageBox(hwnd, "파일 저장 실패!", "오류", MB_OK);
+            }
             break;
 
         case ID_FILE_EXIT:
@@ -447,4 +454,127 @@ void CreateNewPaintWindow(HINSTANCE hInstance)
         TranslateMessage(&newMsg);
         DispatchMessage(&newMsg);
     }
+}
+
+bool trySave(HWND hwnd) {
+    OPENFILENAME OfnData;
+    ZeroMemory(&OfnData, sizeof(OfnData));
+    OfnData.lStructSize = sizeof(OfnData);
+    OfnData.hwndOwner = hwnd;
+    OfnData.lpstrFilter = "Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+    OfnData.nFilterIndex = 1;
+    OfnData.lpstrFile = NULL;
+    OfnData.nMaxFile = 0;
+    OfnData.lpstrDefExt = "bmp";
+    OfnData.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+
+    TCHAR FileName[MAX_PATH] = "";
+    OfnData.lpstrFile = FileName;
+    OfnData.nMaxFile = MAX_PATH;
+
+    if (GetSaveFileName(&OfnData) == TRUE) {
+        RECT ClientRect;
+        GetClientRect(hwnd, &ClientRect);
+        int Width = ClientRect.right - ClientRect.left;
+        int Height = ClientRect.bottom - ClientRect.top;
+
+        HDC ScreenDC = GetDC(hwnd);
+        HDC MemDC = CreateCompatibleDC(ScreenDC);
+        HBITMAP MemBitmap = CreateCompatibleBitmap(ScreenDC, Width, Height);
+        HBITMAP OldBitmap = (HBITMAP)SelectObject(MemDC, MemBitmap);
+
+        BitBlt(MemDC, 0, 0, Width, Height, ScreenDC, 0, 0, SRCCOPY);
+
+        BITMAPFILEHEADER BfHeader;
+        BITMAPINFOHEADER BiHeader;
+        BITMAP Bitmap;
+
+        GetObject(MemBitmap, sizeof(BITMAP), &Bitmap);
+
+        BfHeader.bfType = 0x4D42; // "BM"
+        BfHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+        BfHeader.bfSize =
+            BfHeader.bfOffBits + Bitmap.bmWidthBytes * Bitmap.bmHeight;
+        BfHeader.bfReserved1 = 0;
+        BfHeader.bfReserved2 = 0;
+
+        BiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        BiHeader.biWidth = Bitmap.bmWidth;
+        BiHeader.biHeight = Bitmap.bmHeight;
+        BiHeader.biPlanes = 1;
+        BiHeader.biBitCount = Bitmap.bmBitsPixel;
+        BiHeader.biCompression = BI_RGB;
+        BiHeader.biSizeImage = Bitmap.bmWidthBytes * Bitmap.bmHeight;
+        BiHeader.biXPelsPerMeter = 0;
+        BiHeader.biYPelsPerMeter = 0;
+        BiHeader.biClrUsed = 0;
+        BiHeader.biClrImportant = 0;
+
+        HANDLE FileHandle = CreateFile(FileName, GENERIC_WRITE, 0, NULL,
+            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+        if (FileHandle != INVALID_HANDLE_VALUE) {
+            DWORD BytesWritten = 0;
+            WriteFile(FileHandle, &BfHeader, sizeof(BITMAPFILEHEADER), &BytesWritten,
+                NULL);
+            WriteFile(FileHandle, &BiHeader, sizeof(BITMAPINFOHEADER), &BytesWritten,
+                NULL);
+
+            BYTE* BitmapBits = new BYTE[BiHeader.biSizeImage];
+            if (GetDIBits(MemDC, MemBitmap, 0, BiHeader.biHeight, BitmapBits,
+                (BITMAPINFO*)&BiHeader, DIB_RGB_COLORS)) {
+                WriteFile(FileHandle, BitmapBits, BiHeader.biSizeImage, &BytesWritten,
+                    NULL);
+            }
+            delete[] BitmapBits;
+            CloseHandle(FileHandle);
+        }
+
+        SelectObject(MemDC, OldBitmap);
+        DeleteObject(MemBitmap);
+        DeleteDC(MemDC);
+        ReleaseDC(hwnd, ScreenDC);
+    }
+
+    return TRUE;
+}
+
+bool tryOpen(HWND hwnd) {
+    OPENFILENAME OfnData;
+    ZeroMemory(&OfnData, sizeof(OfnData));
+    OfnData.lStructSize = sizeof(OfnData);
+    OfnData.hwndOwner = hwnd;
+    OfnData.lpstrFilter = "Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+    OfnData.nFilterIndex = 1;
+    OfnData.lpstrFile = NULL;
+    OfnData.nMaxFile = 0;
+    OfnData.lpstrDefExt = "bmp";
+    OfnData.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+    TCHAR FileName[MAX_PATH] = "";
+    OfnData.lpstrFile = FileName;
+    OfnData.nMaxFile = MAX_PATH;
+
+    if (GetOpenFileName(&OfnData) == TRUE) {
+        HBITMAP BitmapHandle =
+            (HBITMAP)LoadImage(NULL, FileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+        if (BitmapHandle != NULL) {
+            HDC ScreenDC = GetDC(hwnd);
+            HDC MemDC = CreateCompatibleDC(ScreenDC);
+            HBITMAP OldBitmap = (HBITMAP)SelectObject(MemDC, BitmapHandle);
+
+            BITMAP Bitmap;
+            GetObject(BitmapHandle, sizeof(BITMAP), &Bitmap);
+
+            BitBlt(ScreenDC, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, MemDC, 0, 0,
+                SRCCOPY);
+
+            SelectObject(MemDC, OldBitmap);
+            DeleteDC(MemDC);
+            ReleaseDC(hwnd, ScreenDC);
+            DeleteObject(BitmapHandle);
+        }
+    }
+
+    return TRUE;
 }
