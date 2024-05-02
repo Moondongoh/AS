@@ -29,8 +29,8 @@
 #define ID_SIZE_30                      40024
 #define ID_FILE_PAINT_NEW               40025
 #define ID_FILE_NEW_PAINT_WINDOW        40026
-#define ID_FILE_PAINT_OPEN              40027
-#define ID_FILE_PAINT_SAVE              40028
+#define ID_FILE_NEW_PAINT_OPEN          40027
+#define ID_FILE_NEW_PAINT_SAVE          40028
 #define ID_Rectangle                    40032
 #define ID_40033                        40033
 #define ID_Line                         40034

@@ -109,6 +109,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     static HDC hdcTemp = NULL;										// 임시 백 버퍼의 DC를 저장하기 위한 변수
 
     PAINTSTRUCT ps;
+	HBITMAP hOldTempBitmap = NULL;
 
     switch (iMsg)
     {
@@ -135,60 +136,56 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_MOUSEMOVE:
-        if (wParam == MK_LBUTTON ||wParam == MK_RBUTTON ){ // 이건 클릭 중인지 확인 -> 클릭중이면서 마우스 움직이면?
-            if (isDrawing || isEraser || isRect || isEllipse) {
-                prevEndPoint = endPoint; // 이전 끝점을 현재 끝점으로 갱신
-                endPoint.x = LOWORD(lParam);
-                endPoint.y = HIWORD(lParam);
-                InvalidateRect(hwnd, NULL, FALSE);
-            }
+    if (wParam & MK_LBUTTON) {
+        if (isRect || isEllipse) {
+            endPoint.x = LOWORD(lParam);
+            endPoint.y = HIWORD(lParam);
+
+            // 이전에 그린 도형을 지우기 위해 화면을 백 버퍼로 복원
+            BitBlt(hdcBuffer, 0, 0, 1920, 1080, hdcTemp, 0, 0, SRCCOPY);
+
+            // 새로운 위치에 도형 그리기
+            SelectObject(hdcBuffer, (HBRUSH)GetStockObject(NULL_BRUSH));
+            if (isRect)
+                Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+            else if (isEllipse)
+                Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+
+            InvalidateRect(hwnd, NULL, FALSE);
         }
-        break;
+    }
+	break;
 
-        //LEFT : 그리기 RIGHT : 지우기
-    case WM_LBUTTONDOWN:
-		if(isRect == TRUE || isEllipse == TRUE)
-		{
+	case WM_LBUTTONDOWN:
+		if (isRect || isEllipse) {
+			// 임시 백 버퍼 생성 및 초기화
+			hdcTemp = CreateCompatibleDC(hdcBuffer);
+			HBITMAP hTempBitmap = CreateCompatibleBitmap(hdcBuffer, 1920, 1080);
+			HBITMAP hOldTempBitmap = (HBITMAP)SelectObject(hdcTemp, hTempBitmap);
+			BitBlt(hdcTemp, 0, 0, 1920, 1080, hdcBuffer, 0, 0, SRCCOPY);
 
-        // 도형을 그릴 때마다 새로운 임시 백 버퍼를 생성
-        if (hTempBitmap != NULL)
-        {
-            SelectObject(hdcTemp, hBitmapOld);
-            DeleteObject(hTempBitmap);
-        }
-
-        hdcTemp = CreateCompatibleDC(hdcBuffer);							// 임시 DC생성
-        hTempBitmap = CreateCompatibleBitmap(hdcBuffer, 1920, 1080);		// 화면 크기랑 동일한 사이즈
-        hBitmapOld = (HBITMAP)SelectObject(hdcTemp, hTempBitmap);			// 임시 DC로 선택
-
-        // 현재 화면을 임시 백 버퍼에 복사
-        BitBlt(hdcTemp, 0, 0, 1920, 1080, hdcBuffer, 0, 0, SRCCOPY);
+			startPoint.x = endPoint.x = LOWORD(lParam);
+			startPoint.y = endPoint.y = HIWORD(lParam);
 		}
+		break;
 
-        // 현재 마우스 위치를 시작점으로 설정
-        startPoint.x = endPoint.x = LOWORD(lParam);
-        startPoint.y = endPoint.y = HIWORD(lParam);
-        prevEndPoint = startPoint;											// 이전 끝점을 현재 시작점으로 설정
+	case WM_LBUTTONUP:
+		if (isRect || isEllipse) {
+			// 최종 도형 그리기
+			SelectObject(hdcBuffer, (HBRUSH)GetStockObject(NULL_BRUSH));
+			if (isRect)
+				Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+			else if (isEllipse)
+				Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
 
-        // 선 그리기 시작
-        isDrawing = TRUE;
-        break;
-
-    case WM_LBUTTONUP:
-        // 도형 그리기 종료
-        isDrawing = FALSE;
-
-        // 임시 백 버퍼의 내용을 화면에 출력
-        BitBlt(hdcBuffer, 0, 0, 1920, 1080, hdcTemp, 0, 0, SRCCOPY);
-
-        // 임시 백 버퍼 해제
-        SelectObject(hdcTemp, hBitmapOld);
-        DeleteObject(hTempBitmap);
-        hTempBitmap = NULL;
-
-        // 화면 갱신
-        InvalidateRect(hwnd, NULL, FALSE);
-        break;
+			// 임시 백 버퍼 해제
+			SelectObject(hdcTemp, hOldTempBitmap);
+			DeleteObject(hTempBitmap);
+			DeleteDC(hdcTemp);
+        
+			InvalidateRect(hwnd, NULL, FALSE);
+		}
+		break;
 
     case WM_RBUTTONDOWN:
         // 지우개 모드로 설정
@@ -300,19 +297,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             CreateNewPaintWindow(GetModuleHandle(NULL));
             break;
 		
-		// 열기 오류 발생시 "L"지우기
+		// 열기
         case ID_FILE_NEW_PAINT_OPEN:
-            if (!tryOpen(hwnd)) {
-                MessageBox(hwnd, L"파일 열기 실패!", L"오류", MB_OK);
-            }
+			tryOpen(hwnd);
             break;
 
 		// 저장
         case ID_FILE_NEW_PAINT_SAVE:
-            if (!trySave(hwnd)) {
-                MessageBox(hwnd, L"파일 저장 실패!", L"오류", MB_OK);
-            }
-            break;
+            trySave(hwnd);
+			break;
 
         case ID_FILE_EXIT:
             DestroyWindow(hwnd);
@@ -455,126 +448,126 @@ void CreateNewPaintWindow(HINSTANCE hInstance)
         DispatchMessage(&newMsg);
     }
 }
-// 오류 발생 시 유니코드 > 멀티 바이트 확인 후 "L"지우기
+
 bool trySave(HWND hwnd) {
-    OPENFILENAME OfnData;
-    ZeroMemory(&OfnData, sizeof(OfnData));
-    OfnData.lStructSize = sizeof(OfnData);
-    OfnData.hwndOwner = hwnd;
-    OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
-    OfnData.nFilterIndex = 1;
-    OfnData.lpstrFile = NULL;
-    OfnData.nMaxFile = 0;
-    OfnData.lpstrDefExt = L"bmp";
-    OfnData.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+  OPENFILENAME OfnData;
+  ZeroMemory(&OfnData, sizeof(OfnData));
+  OfnData.lStructSize = sizeof(OfnData);
+  OfnData.hwndOwner = hwnd;
+  OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+  OfnData.nFilterIndex = 1;
+  OfnData.lpstrFile = NULL;
+  OfnData.nMaxFile = 0;
+  OfnData.lpstrDefExt = L"bmp";
+  OfnData.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
-    TCHAR FileName[MAX_PATH] = L"";
-    OfnData.lpstrFile = FileName;
-    OfnData.nMaxFile = MAX_PATH;
+  TCHAR FileName[MAX_PATH] = L"";
+  OfnData.lpstrFile = FileName;
+  OfnData.nMaxFile = MAX_PATH;
 
-    if (GetSaveFileName(&OfnData) == TRUE) {
-        RECT ClientRect;
-        GetClientRect(hwnd, &ClientRect);
-        int Width = ClientRect.right - ClientRect.left;
-        int Height = ClientRect.bottom - ClientRect.top;
+  if (GetSaveFileName(&OfnData) == TRUE) {
+    RECT ClientRect;
+    GetClientRect(hwnd, &ClientRect);
+    int Width = ClientRect.right - ClientRect.left;
+    int Height = ClientRect.bottom - ClientRect.top;
 
-        HDC ScreenDC = GetDC(hwnd);
-        HDC MemDC = CreateCompatibleDC(ScreenDC);
-        HBITMAP MemBitmap = CreateCompatibleBitmap(ScreenDC, Width, Height);
-        HBITMAP OldBitmap = (HBITMAP)SelectObject(MemDC, MemBitmap);
+    HDC ScreenDC = GetDC(hwnd);
+    HDC MemDC = CreateCompatibleDC(ScreenDC);
+    HBITMAP MemBitmap = CreateCompatibleBitmap(ScreenDC, Width, Height);
+    HBITMAP OldBitmap = (HBITMAP)SelectObject(MemDC, MemBitmap);
 
-        BitBlt(MemDC, 0, 0, Width, Height, ScreenDC, 0, 0, SRCCOPY);
+    BitBlt(MemDC, 0, 0, Width, Height, ScreenDC, 0, 0, SRCCOPY);
 
-        BITMAPFILEHEADER BfHeader;
-        BITMAPINFOHEADER BiHeader;
-        BITMAP Bitmap;
+    BITMAPFILEHEADER BfHeader;
+    BITMAPINFOHEADER BiHeader;
+    BITMAP Bitmap;
 
-        GetObject(MemBitmap, sizeof(BITMAP), &Bitmap);
+    GetObject(MemBitmap, sizeof(BITMAP), &Bitmap);
 
-        BfHeader.bfType = 0x4D42; // "BM"
-        BfHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-        BfHeader.bfSize =
-            BfHeader.bfOffBits + Bitmap.bmWidthBytes * Bitmap.bmHeight;
-        BfHeader.bfReserved1 = 0;
-        BfHeader.bfReserved2 = 0;
+    BfHeader.bfType = 0x4D42; // "BM"
+    BfHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    BfHeader.bfSize =
+        BfHeader.bfOffBits + Bitmap.bmWidthBytes * Bitmap.bmHeight;
+    BfHeader.bfReserved1 = 0;
+    BfHeader.bfReserved2 = 0;
 
-        BiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        BiHeader.biWidth = Bitmap.bmWidth;
-        BiHeader.biHeight = Bitmap.bmHeight;
-        BiHeader.biPlanes = 1;
-        BiHeader.biBitCount = Bitmap.bmBitsPixel;
-        BiHeader.biCompression = BI_RGB;
-        BiHeader.biSizeImage = Bitmap.bmWidthBytes * Bitmap.bmHeight;
-        BiHeader.biXPelsPerMeter = 0;
-        BiHeader.biYPelsPerMeter = 0;
-        BiHeader.biClrUsed = 0;
-        BiHeader.biClrImportant = 0;
+    BiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    BiHeader.biWidth = Bitmap.bmWidth;
+    BiHeader.biHeight = Bitmap.bmHeight;
+    BiHeader.biPlanes = 1;
+    BiHeader.biBitCount = Bitmap.bmBitsPixel;
+    BiHeader.biCompression = BI_RGB;
+    BiHeader.biSizeImage = Bitmap.bmWidthBytes * Bitmap.bmHeight;
+    BiHeader.biXPelsPerMeter = 0;
+    BiHeader.biYPelsPerMeter = 0;
+    BiHeader.biClrUsed = 0;
+    BiHeader.biClrImportant = 0;
 
-        HANDLE FileHandle = CreateFile(FileName, GENERIC_WRITE, 0, NULL,
-            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE FileHandle = CreateFile(FileName, GENERIC_WRITE, 0, NULL,
+                                   CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-        if (FileHandle != INVALID_HANDLE_VALUE) {
-            DWORD BytesWritten = 0;
-            WriteFile(FileHandle, &BfHeader, sizeof(BITMAPFILEHEADER), &BytesWritten,
+    if (FileHandle != INVALID_HANDLE_VALUE) {
+      DWORD BytesWritten = 0;
+      WriteFile(FileHandle, &BfHeader, sizeof(BITMAPFILEHEADER), &BytesWritten,
                 NULL);
-            WriteFile(FileHandle, &BiHeader, sizeof(BITMAPINFOHEADER), &BytesWritten,
+      WriteFile(FileHandle, &BiHeader, sizeof(BITMAPINFOHEADER), &BytesWritten,
                 NULL);
 
-            BYTE* BitmapBits = new BYTE[BiHeader.biSizeImage];
-            if (GetDIBits(MemDC, MemBitmap, 0, BiHeader.biHeight, BitmapBits,
-                (BITMAPINFO*)&BiHeader, DIB_RGB_COLORS)) {
-                WriteFile(FileHandle, BitmapBits, BiHeader.biSizeImage, &BytesWritten,
-                    NULL);
-            }
-            delete[] BitmapBits;
-            CloseHandle(FileHandle);
-        }
-
-        SelectObject(MemDC, OldBitmap);
-        DeleteObject(MemBitmap);
-        DeleteDC(MemDC);
-        ReleaseDC(hwnd, ScreenDC);
+      BYTE *BitmapBits = new BYTE[BiHeader.biSizeImage];
+      if (GetDIBits(MemDC, MemBitmap, 0, BiHeader.biHeight, BitmapBits,
+                    (BITMAPINFO *)&BiHeader, DIB_RGB_COLORS)) {
+        WriteFile(FileHandle, BitmapBits, BiHeader.biSizeImage, &BytesWritten,
+                  NULL);
+      }
+      delete[] BitmapBits;
+      CloseHandle(FileHandle);
     }
 
-    return TRUE;
+    SelectObject(MemDC, OldBitmap);
+    DeleteObject(MemBitmap);
+    DeleteDC(MemDC);
+    ReleaseDC(hwnd, ScreenDC);
+  }
+
+  return TRUE;
 }
 
 bool tryOpen(HWND hwnd) {
-    OPENFILENAME OfnData;
-    ZeroMemory(&OfnData, sizeof(OfnData));
-    OfnData.lStructSize = sizeof(OfnData);
-    OfnData.hwndOwner = hwnd;
-    OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
-    OfnData.nFilterIndex = 1;
-    OfnData.lpstrFile = NULL;
-    OfnData.nMaxFile = 0;
-    OfnData.lpstrDefExt = L"bmp";
-    OfnData.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+  OPENFILENAME OfnData;
+  ZeroMemory(&OfnData, sizeof(OfnData));
+  OfnData.lStructSize = sizeof(OfnData);
+  OfnData.hwndOwner = hwnd;
+  OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+  OfnData.nFilterIndex = 1;
+  OfnData.lpstrFile = NULL;
+  OfnData.nMaxFile = 0;
+  OfnData.lpstrDefExt = L"bmp";
+  OfnData.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-    TCHAR FileName[MAX_PATH] = L"";
-    OfnData.lpstrFile = FileName;
-    OfnData.nMaxFile = MAX_PATH;
+  TCHAR FileName[MAX_PATH] = L"";
+  OfnData.lpstrFile = FileName;
+  OfnData.nMaxFile = MAX_PATH;
 
-    if (GetOpenFileName(&OfnData) == TRUE) {
-        HBITMAP BitmapHandle =
-            (HBITMAP)LoadImage(NULL, FileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-        if (BitmapHandle != NULL) {
-            HDC ScreenDC = GetDC(hwnd);
-            HDC MemDC = CreateCompatibleDC(ScreenDC);
-            HBITMAP OldBitmap = (HBITMAP)SelectObject(MemDC, BitmapHandle);
+  if (GetOpenFileName(&OfnData) == TRUE) {
+    HBITMAP BitmapHandle =
+        (HBITMAP)LoadImage(NULL, FileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    if (BitmapHandle != NULL) {
+      HDC ScreenDC = GetDC(hwnd);
+      HDC MemDC = CreateCompatibleDC(ScreenDC);
+      HBITMAP OldBitmap = (HBITMAP)SelectObject(MemDC, BitmapHandle);
 
-            BITMAP Bitmap;
-            GetObject(BitmapHandle, sizeof(BITMAP), &Bitmap);
+      BITMAP Bitmap;
+      GetObject(BitmapHandle, sizeof(BITMAP), &Bitmap);
 
-            BitBlt(ScreenDC, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, MemDC, 0, 0,
-                SRCCOPY);
+      BitBlt(ScreenDC, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, MemDC, 0, 0,
+             SRCCOPY);
 
-            SelectObject(MemDC, OldBitmap);
-            DeleteDC(MemDC);
-            ReleaseDC(hwnd, ScreenDC);
-            DeleteObject(BitmapHandle);
-        }
+      SelectObject(MemDC, OldBitmap);
+      DeleteDC(MemDC);
+      ReleaseDC(hwnd, ScreenDC);
+      DeleteObject(BitmapHandle);
     }
+  }
 
-    return TRUE;
+  return TRUE;
 }
