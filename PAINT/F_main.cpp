@@ -39,6 +39,12 @@ BOOL isYellow = FALSE;			// 노란색
 BOOL isGreen = FALSE;			// 초록색
 BOOL isBlack= FALSE;			// 검정색
 BOOL isZero= FALSE;				// 투명색
+BOOL is_F_Red = FALSE;				// 빨간색
+BOOL is_F_Blue = FALSE;			// 파란색
+BOOL is_F_Yellow = FALSE;			// 노란색
+BOOL is_F_Green = FALSE;			// 초록색
+BOOL is_F_Black= FALSE;			// 검정색
+BOOL is_F_Zero= FALSE;				// 투명색
 
 int cWidth;						//지우개 크기 변수
 
@@ -134,10 +140,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         isEllipse = FALSE;
 
         break;
+		/*
 
+		*/
     case WM_MOUSEMOVE:
-    if (wParam & MK_LBUTTON) {
-        if (isRect || isEllipse) {
+    if (wParam & MK_LBUTTON || wParam & MK_RBUTTON ) 
+	{
+        if (isDrawing || isEraser) {
+            prevEndPoint = endPoint;
+            endPoint.x = LOWORD(lParam);
+            endPoint.y = HIWORD(lParam);
+            InvalidateRect(hwnd, NULL, FALSE);
+        }
+        else if (isRect || isEllipse) {
             endPoint.x = LOWORD(lParam);
             endPoint.y = HIWORD(lParam);
 
@@ -154,20 +169,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             InvalidateRect(hwnd, NULL, FALSE);
         }
     }
-	break;
+    break;
 
 	case WM_LBUTTONDOWN:
-		if (isRect || isEllipse) {
-			// 임시 백 버퍼 생성 및 초기화
-			hdcTemp = CreateCompatibleDC(hdcBuffer);
-			HBITMAP hTempBitmap = CreateCompatibleBitmap(hdcBuffer, 1920, 1080);
-			HBITMAP hOldTempBitmap = (HBITMAP)SelectObject(hdcTemp, hTempBitmap);
-			BitBlt(hdcTemp, 0, 0, 1920, 1080, hdcBuffer, 0, 0, SRCCOPY);
 
-			startPoint.x = endPoint.x = LOWORD(lParam);
-			startPoint.y = endPoint.y = HIWORD(lParam);
-		}
-		break;
+    if (isRect || isEllipse) {
+        // 임시 백 버퍼 생성 및 초기화
+        hdcTemp = CreateCompatibleDC(hdcBuffer);
+        HBITMAP hTempBitmap = CreateCompatibleBitmap(hdcBuffer, 1920, 1080);
+        HBITMAP hOldTempBitmap = (HBITMAP)SelectObject(hdcTemp, hTempBitmap);
+        BitBlt(hdcTemp, 0, 0, 1920, 1080, hdcBuffer, 0, 0, SRCCOPY);
+
+        startPoint.x = endPoint.x = LOWORD(lParam);
+        startPoint.y = endPoint.y = HIWORD(lParam);
+    }
+    else 
+	{
+        startPoint.x = endPoint.x = LOWORD(lParam);
+        startPoint.y = endPoint.y = HIWORD(lParam);
+        prevEndPoint = startPoint;
+        isDrawing = TRUE;
+    }
+    break;
 
 	case WM_LBUTTONUP:
 		if (isRect || isEllipse) {
@@ -209,61 +232,66 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         // 선 색상
         case ID_RED:
             LineColor = RGB(255, 0, 0);
+			isRed = TRUE;
             InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_BLUE:
             LineColor = RGB(0, 0, 255);
+			isBlue = TRUE;
             InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_YELLOW:
             LineColor = RGB(255, 255, 0);
+			isYellow = TRUE;
             InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_GREEN:
             LineColor = RGB(0, 255, 0);
+			isGreen = TRUE;
             InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_BLACK:
             LineColor = RGB(0, 0, 0);
+			isBlack = TRUE;
             InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_Full_Red:
             FullColor = RGB(255, 0, 0);
-            isRed = TRUE;
+            is_F_Red = TRUE;
             break;
 
         case ID_Full_Blue:
             FullColor = RGB(0, 0, 255);
-            isBlue = TRUE;
+            is_F_Blue = TRUE;
             break;
 
         case ID_Full_Yellow:
             FullColor = RGB(255, 255, 0);
-            isYellow = TRUE;
+            is_F_Yellow = TRUE;
             break;
 
         case ID_Full_Green:
             FullColor = RGB(0, 255, 0);
-            isGreen = TRUE;
+            is_F_Green = TRUE;
             break;
 
         case ID_Full_Black:
             FullColor = RGB(0, 0, 0);
-            isBlack = TRUE;
+            is_F_Black = TRUE;
             break;
 
         case ID_Full_Zero:
-            isRed = FALSE;
-            isBlue =FALSE;
-            isYellow =FALSE;
-            isGreen =FALSE;
-            isBlack =FALSE;
-			isZero = TRUE;
+            is_F_Red = FALSE;
+            is_F_Blue =FALSE;
+            is_F_Yellow =FALSE;
+            is_F_Green =FALSE;
+            is_F_Black =FALSE;
+			is_F_Zero = TRUE;
             break;
 
         // 작업 사이즈  
@@ -342,58 +370,58 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
         {
             HDC hdc = BeginPaint(hwnd, &ps);
-
             // 백 버퍼에 그림을 그림
             HBRUSH hBrush;
+            HPEN hPen;
             if (isEraser)
-                hBrush = CreateSolidBrush(RGB(255, 255, 255)); // 지우개는 흰색으로 설정
-
-            else if(isRed || isBlue || isYellow || isGreen || isBlack)
-            {       
-                hBrush = CreateSolidBrush(FullColor);
-                SelectObject(hdcBuffer, hBrush);
-            }
-
-            else 
             {
-                hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
-                SelectObject(hdcBuffer, hBrush);
+                hBrush = CreateSolidBrush(RGB(255, 255, 255)); // 지우개는 흰색으로 설정
+                hPen = CreatePen(PS_SOLID, cWidth, RGB(255, 255, 255));
             }
+            else
+            {
+                if (is_F_Red || is_F_Blue || is_F_Yellow || is_F_Green || is_F_Black)
+                {
+                    hBrush = CreateSolidBrush(FullColor);
+                }
+                else
+                {
+                    hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
+                }
 
+                if (isRed || isBlue || isYellow || isGreen || isBlack)
+                {
+                    hPen = CreatePen(PS_SOLID, cWidth, LineColor);
+                }
+                else
+                {
+                    hPen = CreatePen(PS_SOLID, cWidth, RGB(0, 0, 0)); // 기본 검정색 펜
+                }
+            }
+            SelectObject(hdcBuffer, hBrush);
+            SelectObject(hdcBuffer, hPen);
             if (isEllipse)
             {
                 isDrawing = FALSE;
-				//FillRect(hdcBuffer, &rect, hWhiteBrush);
                 Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
                 isEllipse = TRUE;
             }
 
             if (isRect)
             {
-				//FillRect(hdcBuffer, &rect, hWhiteBrush);
                 Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
                 isRect = TRUE;
             }
 
             else if (isDrawing || isEraser || isDrawing_2)
             {
-                if (isEraser)
-                    SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, RGB(255, 255, 255))); // 펜 없이 그리기
-
-                else if(isDrawing_2)
-                    isDrawing = TRUE;
-
-                else
-                    SelectObject(hdcBuffer, CreatePen(PS_SOLID, cWidth, LineColor)); // 펜 선택
                 MoveToEx(hdcBuffer, prevEndPoint.x, prevEndPoint.y, NULL);
                 LineTo(hdcBuffer, endPoint.x, endPoint.y);
             }
-
             DeleteObject(hBrush);
-
+            DeleteObject(hPen);
             // 백 버퍼에 그린 그림을 화면에 복사
             BitBlt(hdc, 0, 0, 1920, 1080, hdcBuffer, 0, 0, SRCCOPY);
-
             EndPaint(hwnd, &ps);
         }
         break;
