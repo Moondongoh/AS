@@ -500,14 +500,14 @@ bool trySave(HWND hwnd) {
   ZeroMemory(&OfnData, sizeof(OfnData));
   OfnData.lStructSize = sizeof(OfnData);
   OfnData.hwndOwner = hwnd;
-  OfnData.lpstrFilter = "Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+  OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
   OfnData.nFilterIndex = 1;
   OfnData.lpstrFile = NULL;
   OfnData.nMaxFile = 0;
-  OfnData.lpstrDefExt = "bmp";
+  OfnData.lpstrDefExt = L"bmp";
   OfnData.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
-  TCHAR FileName[MAX_PATH] = "";
+  TCHAR FileName[MAX_PATH] = L"";
   OfnData.lpstrFile = FileName;
   OfnData.nMaxFile = MAX_PATH;
 
@@ -583,14 +583,14 @@ bool tryOpen(HWND hwnd) {
   ZeroMemory(&OfnData, sizeof(OfnData));
   OfnData.lStructSize = sizeof(OfnData);
   OfnData.hwndOwner = hwnd;
-  OfnData.lpstrFilter = "Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+  OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
   OfnData.nFilterIndex = 1;
   OfnData.lpstrFile = NULL;
   OfnData.nMaxFile = 0;
-  OfnData.lpstrDefExt = "bmp";
+  OfnData.lpstrDefExt = L"bmp";
   OfnData.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-  TCHAR FileName[MAX_PATH] = "";
+  TCHAR FileName[MAX_PATH] = L"";
   OfnData.lpstrFile = FileName;
   OfnData.nMaxFile = MAX_PATH;
 
