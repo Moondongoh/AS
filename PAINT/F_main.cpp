@@ -1,6 +1,6 @@
 /*
 [END]1. 윈도우 창을 생성한다.
-[END]>> 상단 툴바에 파일 서식 작업 크기가 있으며 각 기능을 사용 할 수 있다.
+[END]++ 상단 툴바에 파일 서식 작업 크기가 있으며 각 기능을 사용 할 수 있다.
 [END]1-1. 새로 만들기, 새 창, 저장 및 열기, 끝내기을 사용 할 수 있다.
 [END]++ 툴바에 도형 칸 넣고 도형 그릴 수 있다.
 [END]++ 선의 굵기, 선의 색상, 도형 색 채우기를 할 수 있다.
@@ -312,7 +312,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			is_F_Zero = TRUE;
             break;
 
-        // 작업 사이즈  
+        // 선 굵기 사이즈  
         case ID_SIZE_10:
             cWidth = 10;
             //InvalidateRect(hwnd, NULL, FALSE);
@@ -500,14 +500,14 @@ bool trySave(HWND hwnd) {
   ZeroMemory(&OfnData, sizeof(OfnData));
   OfnData.lStructSize = sizeof(OfnData);
   OfnData.hwndOwner = hwnd;
-  OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+  OfnData.lpstrFilter = "Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
   OfnData.nFilterIndex = 1;
   OfnData.lpstrFile = NULL;
   OfnData.nMaxFile = 0;
-  OfnData.lpstrDefExt = L"bmp";
+  OfnData.lpstrDefExt = "bmp";
   OfnData.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
-  TCHAR FileName[MAX_PATH] = L"";
+  TCHAR FileName[MAX_PATH] = "";
   OfnData.lpstrFile = FileName;
   OfnData.nMaxFile = MAX_PATH;
 
@@ -583,14 +583,14 @@ bool tryOpen(HWND hwnd) {
   ZeroMemory(&OfnData, sizeof(OfnData));
   OfnData.lStructSize = sizeof(OfnData);
   OfnData.hwndOwner = hwnd;
-  OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+  OfnData.lpstrFilter = "Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
   OfnData.nFilterIndex = 1;
   OfnData.lpstrFile = NULL;
   OfnData.nMaxFile = 0;
-  OfnData.lpstrDefExt = L"bmp";
+  OfnData.lpstrDefExt = "bmp";
   OfnData.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-  TCHAR FileName[MAX_PATH] = L"";
+  TCHAR FileName[MAX_PATH] = "";
   OfnData.lpstrFile = FileName;
   OfnData.nMaxFile = MAX_PATH;
 
