@@ -1,11 +1,12 @@
 /*
 [END]1. 윈도우 창을 생성한다.
-[END]>> 상단 툴바에 파일 서식 작업 크기가 있으며 각 기능들 추가 중이다.
-[---]1-1. 새로 만들기, 새 창, 저장 및 열기, 끝내기 기능 추가 할 예정
-[END]++ 툴바에 도형 칸 넣고 도형 그리기 추가 할 예정
+[END]++ 상단 툴바에 파일 서식 작업 크기가 있으며 각 기능을 사용 할 수 있다.
+[END]1-1. 새로 만들기, 새 창, 저장 및 열기, 끝내기을 사용 할 수 있다.
+[END]++ 툴바에 도형 칸 넣고 도형 그릴 수 있다.
+[END]++ 선의 굵기, 선의 색상, 도형 색 채우기를 할 수 있다.
 [END]2. 마우스 좌 클릭 시 그리기 가능하다.
 [END]3. 마우스 우 클릭 시 지우기 가능하다.
-[END]4. 작업 영역(1920*1080)을 가지면 백 버퍼릉 만들어 더블 버퍼링 사용 중이다.
+[END]4. 작업 영역(1920*1080)을 가지면 백 버퍼를 만들어 더블 버퍼링 사용 중이다.
 [NO]5. 스크롤 기능? 
 [NO]6. 작업 영역에 격자 넣기?
 */
@@ -39,12 +40,13 @@ BOOL isYellow = FALSE;			// 노란색
 BOOL isGreen = FALSE;			// 초록색
 BOOL isBlack= FALSE;			// 검정색
 BOOL isZero= FALSE;				// 투명색
-BOOL is_F_Red = FALSE;				// 빨간색
+BOOL is_F_Red = FALSE;			// 빨간색
 BOOL is_F_Blue = FALSE;			// 파란색
-BOOL is_F_Yellow = FALSE;			// 노란색
-BOOL is_F_Green = FALSE;			// 초록색
+BOOL is_F_Yellow = FALSE;		// 노란색
+BOOL is_F_Green = FALSE;		// 초록색
 BOOL is_F_Black= FALSE;			// 검정색
-BOOL is_F_Zero= FALSE;				// 투명색
+BOOL is_F_Zero= FALSE;			// 투명색
+
 
 int cWidth;						//지우개 크기 변수
 
@@ -76,8 +78,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     hwnd = CreateWindow(lpszClass,
                         lpszClass,
                         WS_OVERLAPPEDWINDOW,
-                        100,
-                        50,
+                        CW_USEDEFAULT,
+                        CW_USEDEFAULT,
                         600,
                         400,
                         NULL,
@@ -120,6 +122,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     switch (iMsg)
     {
     case WM_CREATE:
+
+		// Window창을 화면 정중앙에 위치 시키는 코드
+		int x, y, width, height;
+		RECT rtDesk, rtWindow;
+		GetWindowRect(GetDesktopWindow(), &rtDesk);
+		GetWindowRect(hwnd, &rtWindow);
+
+		width = rtWindow.right - rtWindow.left;
+		height = rtWindow.bottom - rtWindow.top;
+
+		x = (rtDesk.right - width) / 2;
+		y = (rtDesk.bottom - height) / 2;
+
+		MoveWindow(hwnd, x, y, width, height, TRUE);
+		//
+
         // 백 버퍼 초기화
         hdcBuffer = CreateCompatibleDC(NULL);
         hBitmapBuffer = CreateCompatibleBitmap(GetDC(hwnd), 1920, 1080);
@@ -161,10 +179,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
             // 새로운 위치에 도형 그리기
             SelectObject(hdcBuffer, (HBRUSH)GetStockObject(NULL_BRUSH));
-            if (isRect)
+            /*if (isRect)
                 Rectangle(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
             else if (isEllipse)
-                Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+                Ellipse(hdcBuffer, startPoint.x, startPoint.y, endPoint.x, endPoint.y);*/
 
             InvalidateRect(hwnd, NULL, FALSE);
         }
@@ -233,31 +251,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case ID_RED:
             LineColor = RGB(255, 0, 0);
 			isRed = TRUE;
-            InvalidateRect(hwnd, NULL, FALSE);
+            //InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_BLUE:
             LineColor = RGB(0, 0, 255);
 			isBlue = TRUE;
-            InvalidateRect(hwnd, NULL, FALSE);
+            //InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_YELLOW:
             LineColor = RGB(255, 255, 0);
 			isYellow = TRUE;
-            InvalidateRect(hwnd, NULL, FALSE);
+            //InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_GREEN:
             LineColor = RGB(0, 255, 0);
 			isGreen = TRUE;
-            InvalidateRect(hwnd, NULL, FALSE);
+            //InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_BLACK:
             LineColor = RGB(0, 0, 0);
 			isBlack = TRUE;
-            InvalidateRect(hwnd, NULL, FALSE);
+            //InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_Full_Red:
@@ -294,20 +312,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			is_F_Zero = TRUE;
             break;
 
-        // 작업 사이즈  
+        // 선 굵기 사이즈  
         case ID_SIZE_10:
             cWidth = 10;
-            InvalidateRect(hwnd, NULL, FALSE);
+            //InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_SIZE_20:
             cWidth = 20;
-            InvalidateRect(hwnd, NULL, FALSE);
+            //InvalidateRect(hwnd, NULL, FALSE);
             break;
 
         case ID_SIZE_30:
             cWidth = 30;
-            InvalidateRect(hwnd, NULL, FALSE);
+            //InvalidateRect(hwnd, NULL, FALSE);
             break;
 
 		// 새로 만들기
@@ -482,14 +500,14 @@ bool trySave(HWND hwnd) {
   ZeroMemory(&OfnData, sizeof(OfnData));
   OfnData.lStructSize = sizeof(OfnData);
   OfnData.hwndOwner = hwnd;
-  OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+  OfnData.lpstrFilter = "Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
   OfnData.nFilterIndex = 1;
   OfnData.lpstrFile = NULL;
   OfnData.nMaxFile = 0;
-  OfnData.lpstrDefExt = L"bmp";
+  OfnData.lpstrDefExt = "bmp";
   OfnData.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
-  TCHAR FileName[MAX_PATH] = L"";
+  TCHAR FileName[MAX_PATH] = "";
   OfnData.lpstrFile = FileName;
   OfnData.nMaxFile = MAX_PATH;
 
@@ -565,36 +583,35 @@ bool tryOpen(HWND hwnd) {
   ZeroMemory(&OfnData, sizeof(OfnData));
   OfnData.lStructSize = sizeof(OfnData);
   OfnData.hwndOwner = hwnd;
-  OfnData.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+  OfnData.lpstrFilter = "Bitmap Files (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
   OfnData.nFilterIndex = 1;
   OfnData.lpstrFile = NULL;
   OfnData.nMaxFile = 0;
-  OfnData.lpstrDefExt = L"bmp";
+  OfnData.lpstrDefExt = "bmp";
   OfnData.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-  TCHAR FileName[MAX_PATH] = L"";
+  TCHAR FileName[MAX_PATH] = "";
   OfnData.lpstrFile = FileName;
   OfnData.nMaxFile = MAX_PATH;
 
   if (GetOpenFileName(&OfnData) == TRUE) {
+    HDC ScreenDC = GetDC(hwnd);
+    HDC MemDC = CreateCompatibleDC(ScreenDC);
+    HBITMAP OldBitmapBuffer = (HBITMAP)SelectObject(hdcBuffer, hBitmapBuffer); // 현재 백 버퍼 저장
     HBITMAP BitmapHandle =
         (HBITMAP)LoadImage(NULL, FileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     if (BitmapHandle != NULL) {
-      HDC ScreenDC = GetDC(hwnd);
-      HDC MemDC = CreateCompatibleDC(ScreenDC);
-      HBITMAP OldBitmap = (HBITMAP)SelectObject(MemDC, BitmapHandle);
+      HDC FileDC = CreateCompatibleDC(ScreenDC);
+      HBITMAP OldBitmap = (HBITMAP)SelectObject(FileDC, BitmapHandle);
+      BitBlt(hdcBuffer, 0, 0, 1920, 1080, FileDC, 0, 0, SRCCOPY); // 새 파일의 내용을 백 버퍼에 복사
 
-      BITMAP Bitmap;
-      GetObject(BitmapHandle, sizeof(BITMAP), &Bitmap);
-
-      BitBlt(ScreenDC, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, MemDC, 0, 0,
-             SRCCOPY);
-
-      SelectObject(MemDC, OldBitmap);
-      DeleteDC(MemDC);
-      ReleaseDC(hwnd, ScreenDC);
+      SelectObject(FileDC, OldBitmap);
+      DeleteDC(FileDC);
       DeleteObject(BitmapHandle);
     }
+    SelectObject(hdcBuffer, OldBitmapBuffer); // 이전 백 버퍼로 복원
+    ReleaseDC(hwnd, ScreenDC);
+    InvalidateRect(hwnd, NULL, FALSE); // 화면 갱신
   }
 
   return TRUE;
