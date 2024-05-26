@@ -20,12 +20,13 @@
 // CMFCMemoApp
 
 BEGIN_MESSAGE_MAP(CMFCMemoApp, CWinApp)
+
 	ON_COMMAND(ID_APP_ABOUT, &CMFCMemoApp::OnAppAbout)
+
 	// 표준 파일을 기초로 하는 문서 명령입니다.
 	ON_COMMAND(ID_FILE_NEW, &CWinApp::OnFileNew)
 	ON_COMMAND(ID_FILE_OPEN, &CWinApp::OnFileOpen)
-	// 표준 인쇄 설정 명령입니다.
-	ON_COMMAND(ID_FILE_PRINT_SETUP, &CWinApp::OnFilePrintSetup)
+
 END_MESSAGE_MAP()
 
 
@@ -146,7 +147,7 @@ class CAboutDlg : public CDialogEx
 public:
 	CAboutDlg() noexcept;
 
-// 대화 상자 데이터입니다.
+	// 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
@@ -154,12 +155,12 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
 
-// 구현입니다.
+	// 구현입니다.
 protected:
 	DECLARE_MESSAGE_MAP()
 public:
-//	afx_msg void OnFileNewWindow();
-//	afx_msg void OnFileNew();
+	//	afx_msg void OnFileNewWindow();
+	//	afx_msg void OnFileNew();
 };
 
 CAboutDlg::CAboutDlg() noexcept : CDialogEx(IDD_ABOUTBOX)
@@ -172,8 +173,8 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
-//	ON_COMMAND(ID_FILE_NEW_WINDOW, &CAboutDlg::OnFileNewWindow)
-//	ON_COMMAND(ID_FILE_NEW, &CAboutDlg::OnFileNew)
+	//	ON_COMMAND(ID_FILE_NEW_WINDOW, &CAboutDlg::OnFileNewWindow)
+	//	ON_COMMAND(ID_FILE_NEW, &CAboutDlg::OnFileNew)
 END_MESSAGE_MAP()
 
 // 대화 상자를 실행하기 위한 응용 프로그램 명령입니다.

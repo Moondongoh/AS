@@ -1,8 +1,2 @@
-﻿  MFC_MemoView.cpp
-C:\Users\mdh38\OneDrive\바탕 화면\MFC_Memo_복사본\MFC_Memo\MFC_MemoView.cpp(261,38): warning C4267: '=': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  (소스 파일 '/MFC_MemoView.cpp'을(를) 컴파일하는 중)
-  
-C:\Users\mdh38\OneDrive\바탕 화면\MFC_Memo_복사본\MFC_Memo\MFC_MemoView.cpp(264,34): warning C4267: '초기화 중': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  (소스 파일 '/MFC_MemoView.cpp'을(를) 컴파일하는 중)
-  
-  MFC_Memo.vcxproj -> C:\Users\mdh38\OneDrive\바탕 화면\MFC_Memo_복사본\x64\Debug\MFC_Memo.exe
+﻿  MFC_Memo.cpp
+  MFC_Memo.vcxproj -> C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\MFC_Memo\x64\Debug\MFC_Memo.exe
