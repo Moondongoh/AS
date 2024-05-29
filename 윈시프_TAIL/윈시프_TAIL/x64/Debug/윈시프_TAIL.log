@@ -1,0 +1,45 @@
+﻿  GETARGS.C
+C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\GETARGS.C(5,6): warning C4273: 'GetArgs': dll 연결이 일치하지 않습니다.
+  C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\support.h(50,14):
+  'GetArgs'의 이전 정의를 참조하십시오.
+  
+  OPTIONS.C
+C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\OPTIONS.C(6,7): warning C4273: 'Options': dll 연결이 일치하지 않습니다.
+  C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\support.h(42,15):
+  'Options'의 이전 정의를 참조하십시오.
+  
+  PRINTMSG.C
+C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\PRINTMSG.C(9,6): warning C4273: 'PrintStrings': dll 연결이 일치하지 않습니다.
+  C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\support.h(38,14):
+  'PrintStrings'의 이전 정의를 참조하십시오.
+  
+C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\PRINTMSG.C(36,6): warning C4273: 'PrintMsg': dll 연결이 일치하지 않습니다.
+  C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\support.h(39,14):
+  'PrintMsg'의 이전 정의를 참조하십시오.
+  
+C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\PRINTMSG.C(48,6): warning C4273: 'ConsolePrompt': dll 연결이 일치하지 않습니다.
+  C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\support.h(37,14):
+  'ConsolePrompt'의 이전 정의를 참조하십시오.
+  
+  REPRTERR.C
+C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\REPRTERR.C(3,6): warning C4273: 'ReportError': dll 연결이 일치하지 않습니다.
+  C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\support.h(40,14):
+  'ReportError'의 이전 정의를 참조하십시오.
+  
+C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\REPRTERR.C(38,6): warning C4273: 'ReportException': dll 연결이 일치하지 않습니다.
+  C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\support.h(41,14):
+  'ReportException'의 이전 정의를 참조하십시오.
+  
+  SKIPARG.C
+C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\SKIPARG.C(6,8): warning C4273: 'SkipArg': dll 연결이 일치하지 않습니다.
+  C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\support.h(43,16):
+  'SkipArg'의 이전 정의를 참조하십시오.
+  
+  WSTRINGS.C
+C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\WSTRINGS.C(3,9): warning C4273: 'wmemchr': dll 연결이 일치하지 않습니다.
+  C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\윈시프_TAIL\support.h(49,17):
+  'wmemchr'의 이전 정의를 참조하십시오.
+  
+  소스.c
+  코드를 생성하고 있습니다...
+  윈시프_TAIL.vcxproj -> C:\Users\mdh38\OneDrive\바탕 화면\Git_Hub\AS\윈시프_TAIL\x64\Debug\윈시프_TAIL.exe
