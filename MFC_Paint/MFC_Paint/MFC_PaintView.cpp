@@ -47,6 +47,8 @@ BEGIN_MESSAGE_MAP(CMFCPaintView, CView)
     ON_COMMAND(ID_LINE_1, &CMFCPaintView::OnLine1)
     ON_COMMAND(ID_LINE_10, &CMFCPaintView::OnLine10)
     ON_COMMAND(ID_LINE_15, &CMFCPaintView::OnLine15)
+    ON_COMMAND(ID_Rect, &CMFCPaintView::OnRect)
+    ON_COMMAND(ID_Ellipse, &CMFCPaintView::OnEllipse)
 END_MESSAGE_MAP()
 
 void CMFCPaintView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -188,4 +190,16 @@ void CMFCPaintView::OnLine10()
 void CMFCPaintView::OnLine15()
 {
     m_nPenWidth = 15; // 선 굵기를 1로 설정
+}
+
+
+void CMFCPaintView::OnRect()
+{
+    // TODO: 여기에 명령 처리기 코드를 추가합니다.
+}
+
+
+void CMFCPaintView::OnEllipse()
+{
+    // TODO: 여기에 명령 처리기 코드를 추가합니다.
 }

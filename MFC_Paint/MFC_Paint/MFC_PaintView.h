@@ -52,4 +52,6 @@ public:
     afx_msg void OnLine1();
     afx_msg void OnLine10();
     afx_msg void OnLine15();
+    afx_msg void OnRect();
+    afx_msg void OnEllipse();
 };
