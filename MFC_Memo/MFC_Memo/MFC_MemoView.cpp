@@ -7,7 +7,7 @@
 * - 새로 만들기, 새 창, 저장 및 열기, 끝내기 [완료]
 * 4. 스크롤 기능을 이용 가능하다.            [완료]
 * 5. 캐럿의 기능을 구현함.
-* -EX)하단 혹은 우측 끝에 닿으면 화면 처리   [미완료]
+* -EX)하단 혹은 우측 끝에 닿으면 화면 처리   [완료]
 */
 
 #include "pch.h"
@@ -96,7 +96,7 @@ void CMFCMemoView::OnDraw(CDC* pDC)
     CFont font;
     font.CreateFontW(20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, L"Arial");
-    pDC->SelectObject(&font);
+    CFont* pOldFont = pDC->SelectObject(&font); // 여기 **************
 
     // 텍스트를 화면에 출력합니다.
     for (int i = 0; i < Row; ++i)
@@ -226,7 +226,6 @@ CMFCMemoDoc* CMFCMemoView::GetDocument() const // 디버그되지 않은 버전�
 #endif //_DEBUG
 
 // *********************************** 메뉴바 기능 ***********************************
-
 void CMFCMemoView::OnFileSave2()
 {
     // 파일 저장 대화상자 생성
@@ -373,10 +372,37 @@ void CMFCMemoView::UpdateCaretPosition()
         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, L"Arial");
     CFont* pOldFont = dc.SelectObject(&font);
 
+    // 현재 캐럿 위치 계산
     int x = dc.GetTextExtent(CString(m_textArray[m_nCurrentRow], m_nCurrentColumn)).cx;
     int y = m_nCurrentRow * 20;
 
-    SetCaretPos(CPoint(x, y));
+    // 스크롤 영역 크기 가져오기
+    CRect clientRect;
+    GetClientRect(&clientRect);
+
+    // 현재 스크롤 위치 가져오기
+    CPoint scrollPos = GetScrollPosition();
+
+    // 캐럿이 클라이언트 영역의 상단을 초과하는지 확인하고 스크롤 조정
+    if (y < scrollPos.y) {
+        ScrollToPosition(CPoint(scrollPos.x, max(y - 20, 0)));
+    }
+    // 캐럿이 클라이언트 영역의 하단을 초과하는지 확인하고 스크롤 조정
+    else if (y + 20 > scrollPos.y + clientRect.Height()) {
+        ScrollToPosition(CPoint(scrollPos.x, min(y + 20 - clientRect.Height(), GetScrollLimit(SB_VERT))));
+    }
+
+    // 캐럿이 클라이언트 영역의 좌측을 초과하는지 확인하고 스크롤 조정
+    if (x < scrollPos.x) {
+        ScrollToPosition(CPoint(max(x - 20, 0), scrollPos.y));
+    }
+    // 캐럿이 클라이언트 영역의 우측을 초과하는지 확인하고 스크롤 조정
+    else if (x > scrollPos.x + clientRect.Width()) {
+        ScrollToPosition(CPoint(min(x - clientRect.Width() + 20, GetScrollLimit(SB_HORZ)), scrollPos.y));
+    }
+
+    // 캐럿 위치 설정
+    SetCaretPos(CPoint(x - scrollPos.x, y - scrollPos.y));
 
     dc.SelectObject(pOldFont);
 }

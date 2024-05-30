@@ -18,11 +18,32 @@ public:
 public:
     // 선 그리기 및 지우개 Part
     CPoint m_ptPrev; // 이전 점을 저장하기 위한 변수
-    bool m_bDrawing; // 현재 그리고 있는지 여부
-    bool m_bErasing; // 현재 지우개를 사용하고 있는지 여부
+    CPoint m_startPoint;
+    CPoint m_endPoint;
 
+    bool m_isDrawing; // 현재 그리고 있는지 여부
+    bool m_isErasing; // 현재 지우개를 사용하고 있는지 여부
+    bool m_isLine;
+    bool m_isRect;
+    bool m_isEllipse;
+
+    bool isRed;
+    bool isBlue;
+    bool isGreen;
+
+
+    bool F_isRed;
+    bool F_isBlue;
+    bool F_isGreen;
     // 선 굵기 Part
-    int m_nPenWidth; // 선 굵기
+    int m_PenWidth; // 선 굵기
+
+    // 선 색상
+    COLORREF LineColor = 0x00000000;
+    COLORREF FullColor = RGB(255,255,255);//NULL_BRUSH
+
+    CBitmap m_BackBuffer;        // 더블 버퍼링을 위한 비트맵
+    CDC m_BackBufferDC;          // 더블 버퍼링을 위한 DC
 
     // 재정의입니다.
 public:
@@ -54,4 +75,14 @@ public:
     afx_msg void OnLine15();
     afx_msg void OnRect();
     afx_msg void OnEllipse();
+    afx_msg void OnLine();
+    afx_msg void OnFileNew();
+    afx_msg void OnFileOpen();
+    afx_msg void OnFileSave();
+    afx_msg void OnRed();
+    afx_msg void OnBlue();
+    afx_msg void OnGreen();
+    afx_msg void OnLRed();
+    afx_msg void OnLBlue();
+    afx_msg void OnLGreen();
 };

@@ -9,19 +9,14 @@
 - 도형(직사각형, 원형)그리기가 가능하다.
 - 선 굵기에 대해서 조정이 가능하다.
 5. 도형 그리기 시 더블 버퍼링 작업이 된다.
-6. 
 */
 
-
 // MFC_PaintView.cpp: CMFCPaintView 클래스의 구현
-//
-
 #include "pch.h"
 #include "framework.h"
-// SHARED_HANDLERS는 미리 보기, 축소판 그림 및 검색 필터 처리기를 구현하는 ATL 프로젝트에서 정의할 수 있으며
-// 해당 프로젝트와 문서 코드를 공유하도록 해 줍니다.
 #ifndef SHARED_HANDLERS
 #include "MFC_Paint.h"
+#include <vector>
 #endif
 
 #include "MFC_PaintDoc.h"
@@ -31,12 +26,7 @@
 #define new DEBUG_NEW
 #endif
 
-
-// CMFCPaintView
-
 IMPLEMENT_DYNCREATE(CMFCPaintView, CView)
-
-// MFC_PaintView.cpp 파일에 다음과 같은 이벤트 처리기를 추가합니다.
 
 BEGIN_MESSAGE_MAP(CMFCPaintView, CView)
     ON_WM_LBUTTONDOWN()
@@ -49,44 +39,140 @@ BEGIN_MESSAGE_MAP(CMFCPaintView, CView)
     ON_COMMAND(ID_LINE_15, &CMFCPaintView::OnLine15)
     ON_COMMAND(ID_Rect, &CMFCPaintView::OnRect)
     ON_COMMAND(ID_Ellipse, &CMFCPaintView::OnEllipse)
+    ON_COMMAND(ID_Line, &CMFCPaintView::OnLine)
+    ON_COMMAND(ID_FILE_NEW, &CMFCPaintView::OnFileNew)
+    ON_COMMAND(ID_FILE_OPEN, &CMFCPaintView::OnFileOpen)
+    ON_COMMAND(ID_FILE_SAVE, &CMFCPaintView::OnFileSave)
+    ON_COMMAND(ID_Red, &CMFCPaintView::OnRed)
+    ON_COMMAND(ID_Blue, &CMFCPaintView::OnBlue)
+    ON_COMMAND(ID_Green, &CMFCPaintView::OnGreen)
+    ON_COMMAND(ID_L_Red, &CMFCPaintView::OnLRed)
+    ON_COMMAND(ID_L_Blue, &CMFCPaintView::OnLBlue)
+    ON_COMMAND(ID_L_Green, &CMFCPaintView::OnLGreen)
 END_MESSAGE_MAP()
+
+CMFCPaintView::CMFCPaintView() noexcept
+    : m_isDrawing(false), m_isErasing(false), m_PenWidth(1), m_isRect(false), m_isEllipse(false), m_isLine(true), isRed(false), isBlue(false), isGreen(false)
+{
+}
+
+CMFCPaintView::~CMFCPaintView()
+{
+    if (m_BackBuffer.GetSafeHandle())
+    {
+        m_BackBuffer.DeleteObject();
+    }
+
+    if (m_BackBufferDC.GetSafeHdc())
+    {
+        m_BackBufferDC.DeleteDC();
+    }
+}
+
+BOOL CMFCPaintView::PreCreateWindow(CREATESTRUCT& cs)
+{
+    return CView::PreCreateWindow(cs);
+}
+
+void CMFCPaintView::OnDraw(CDC* pDC)
+{
+    CMFCPaintDoc* pDoc = GetDocument();
+    ASSERT_VALID(pDoc);
+    if (!pDoc)
+        return;
+
+    if (!m_BackBuffer.GetSafeHandle())
+    {
+        CRect rect;
+        GetClientRect(&rect);
+        m_BackBuffer.CreateCompatibleBitmap(pDC, rect.Width(), rect.Height());
+        m_BackBufferDC.CreateCompatibleDC(pDC);
+        m_BackBufferDC.SelectObject(&m_BackBuffer);
+        m_BackBufferDC.FillSolidRect(&rect, RGB(255, 255, 255));
+    }
+
+    pDC->BitBlt(0, 0, m_BackBufferDC.GetDeviceCaps(HORZRES), m_BackBufferDC.GetDeviceCaps(VERTRES), &m_BackBufferDC, 0, 0, SRCCOPY);
+}
 
 void CMFCPaintView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-    m_ptPrev = point; // 시작 점 설정
-    m_bDrawing = true; // 드로잉 시작
-    m_bErasing = false; // 지우개 모드 비활성화
+    m_startPoint = point;
+    m_isDrawing = true;
+    m_isErasing = false;
     CView::OnLButtonDown(nFlags, point);
 }
 
+// 선 그릴때 사용 할 벡터
+std::vector<CPoint> m_points;
+
 void CMFCPaintView::OnMouseMove(UINT nFlags, CPoint point)
 {
-    if (m_bDrawing)
+    if (m_isDrawing)
     {
-        // 좌표 저장할 때 CPoint 클래스 이용
-        CDC* pDC = GetDC();
-        CPen pen(PS_SOLID, m_nPenWidth, RGB(0, 0, 0)); // 선 굵기와 색상 설정
-        CPen* pOldPen = pDC->SelectObject(&pen);
+        m_endPoint = point;
 
-        pDC->MoveTo(m_ptPrev); // 이전 점에서
-        pDC->LineTo(point); // 현재 점까지 선을 그림
+        // 현재 창 크기를 알아냄.
+        CRect rect;
+        GetClientRect(&rect);
+        CDC tempDC;
+        tempDC.CreateCompatibleDC(&m_BackBufferDC);
+        CBitmap tempBitmap;
+        tempBitmap.CreateCompatibleBitmap(&m_BackBufferDC, rect.Width(), rect.Height());
+        tempDC.SelectObject(&tempBitmap);
+        tempDC.BitBlt(0, 0, rect.Width(), rect.Height(), &m_BackBufferDC, 0, 0, SRCCOPY);
 
-        pDC->SelectObject(pOldPen);
-        m_ptPrev = point; // 현재 점을 이전 점으로 업데이트
-        ReleaseDC(pDC);
+        CPen pen(PS_SOLID, m_PenWidth, LineColor);
+        CPen* pOldPen = tempDC.SelectObject(&pen);
+
+        //CBrush* pOldBrush = tempDC.SelectObject(CBrush::FromHandle((HBRUSH)GetStockObject(NULL_BRUSH)));
+
+        CBrush brush;
+        brush.CreateStockObject(NULL_BRUSH);
+        CBrush* pOldBrush = tempDC.SelectObject(&brush);
+
+        if (m_isRect)
+        {
+            tempDC.Rectangle(CRect(m_startPoint, m_endPoint));
+        }
+        else if (m_isEllipse)
+        {
+            tempDC.Ellipse(CRect(m_startPoint, m_endPoint));
+        }
+        else if (m_isLine)
+        {
+            if (!m_points.empty())
+            {
+                tempDC.MoveTo(m_points[0]);
+                for (size_t i = 1; i < m_points.size(); ++i)
+                {
+                    tempDC.LineTo(m_points[i]);
+                }
+            }
+            tempDC.LineTo(point);
+        }
+
+        tempDC.SelectObject(pOldPen);
+        tempDC.SelectObject(pOldBrush);
+
+        // 임시 버퍼 출력.
+        CClientDC dc(this);
+        dc.BitBlt(0, 0, rect.Width(), rect.Height(), &tempDC, 0, 0, SRCCOPY);
+
+        // 마우스 위치를 벡터에 추가.
+        if (m_isLine)
+        {
+            m_points.push_back(point);
+        }
     }
-    else if (m_bErasing)
+    else if (m_isErasing)
     {
-        CDC* pDC = GetDC();
-        CPen pen(PS_SOLID, m_nPenWidth, RGB(255, 255, 255)); // 선 굵기와 색상 설정
-        CPen* pOldPen = pDC->SelectObject(&pen);
-
-        pDC->MoveTo(m_ptPrev); // 이전 점에서
-        pDC->LineTo(point); // 현재 점까지 선을 그림
-
-        pDC->SelectObject(pOldPen);
-        m_ptPrev = point; // 현재 점을 이전 점으로 업데이트
-        ReleaseDC(pDC);
+        CPen pen(PS_SOLID, m_PenWidth, RGB(255, 255, 255));
+        CPen* pOldPen = m_BackBufferDC.SelectObject(&pen);
+        m_BackBufferDC.MoveTo(m_ptPrev);
+        m_BackBufferDC.LineTo(point);
+        m_BackBufferDC.SelectObject(pOldPen);
+        m_ptPrev = point;
+        Invalidate(FALSE);
     }
 
     CView::OnMouseMove(nFlags, point);
@@ -94,112 +180,233 @@ void CMFCPaintView::OnMouseMove(UINT nFlags, CPoint point)
 
 void CMFCPaintView::OnLButtonUp(UINT nFlags, CPoint point)
 {
-    if (m_bDrawing)
+    if (m_isDrawing)
     {
-        m_bDrawing = false; // 드로잉 끝
+        m_endPoint = point;
+        m_isDrawing = false;
+
+        // 백 버퍼에 최종 도형을 그림.
+        CPen pen(PS_SOLID, m_PenWidth, LineColor);
+        CPen* pOldPen = m_BackBufferDC.SelectObject(&pen);
+
+        //CBrush* pOldBrush = m_BackBufferDC.SelectObject(CBrush::FromHandle((HBRUSH)GetStockObject(NULL_BRUSH)));
+
+        CBrush brush;
+        brush.CreateStockObject(NULL_BRUSH);
+        CBrush* pOldBrush = m_BackBufferDC.SelectObject(&brush);
+
+        if (m_isRect)
+        {
+                m_BackBufferDC.Rectangle(CRect(m_startPoint, m_endPoint));
+        }
+        else if (m_isEllipse)
+        {
+            m_BackBufferDC.Ellipse(CRect(m_startPoint, m_endPoint));
+        }
+        else if (m_isLine)
+        {
+            if (!m_points.empty())
+            {
+                m_BackBufferDC.MoveTo(m_points[0]);
+                for (size_t i = 1; i < m_points.size(); ++i)
+                {
+                    m_BackBufferDC.LineTo(m_points[i]);
+                }
+            }
+            m_points.clear();
+        }
+
+        m_BackBufferDC.SelectObject(pOldPen);
+        m_BackBufferDC.SelectObject(pOldBrush);
+
+        Invalidate(FALSE);
     }
+
     CView::OnLButtonUp(nFlags, point);
 }
 
 void CMFCPaintView::OnRButtonDown(UINT nFlags, CPoint point)
 {
-    m_ptPrev = point; // 시작 점 설정
-    m_bErasing = true; // 지우개 시작
-    m_bDrawing = false; // 드로잉 모드 비활성화
+    m_ptPrev = point;
+    m_isErasing = true;
+    m_isDrawing = false;
     CView::OnRButtonDown(nFlags, point);
 }
 
 void CMFCPaintView::OnRButtonUp(UINT nFlags, CPoint point)
 {
-    if (m_bErasing)
+    if (m_isErasing)
     {
-        m_bErasing = false; // 지우개 끝
+        m_isErasing = false;
     }
     CView::OnRButtonUp(nFlags, point);
 }
 
-// CMFCPaintView 생성/소멸
-
-CMFCPaintView::CMFCPaintView() noexcept
-    : m_bDrawing(false), m_bErasing(false), m_nPenWidth(1) // 초기 선 굵기를 1로 설정
-{
-    // TODO: 여기에 생성 코드를 추가합니다.
-}
-
-CMFCPaintView::~CMFCPaintView()
-{
-}
-
-BOOL CMFCPaintView::PreCreateWindow(CREATESTRUCT& cs)
-{
-    // 시작점
-    m_bErasing = false; // 지우개 시작
-    m_bDrawing = false; // 드로잉 모드 비활성화
-
-	return CView::PreCreateWindow(cs);
-}
-
-// CMFCPaintView 그리기
-
-void CMFCPaintView::OnDraw(CDC* /*pDC*/)
-{
-	CMFCPaintDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	if (!pDoc)
-		return;
-
-	// TODO: 여기에 원시 데이터에 대한 그리기 코드를 추가합니다.
-}
-
 // CMFCPaintView 진단
-
 #ifdef _DEBUG
 void CMFCPaintView::AssertValid() const
 {
-	CView::AssertValid();
+    CView::AssertValid();
 }
 
 void CMFCPaintView::Dump(CDumpContext& dc) const
 {
-	CView::Dump(dc);
+    CView::Dump(dc);
 }
 
-CMFCPaintDoc* CMFCPaintView::GetDocument() const // 디버그되지 않은 버전은 인라인으로 지정됩니다.
+CMFCPaintDoc* CMFCPaintView::GetDocument() const
 {
-	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CMFCPaintDoc)));
-	return (CMFCPaintDoc*)m_pDocument;
+    ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CMFCPaintDoc)));
+    return (CMFCPaintDoc*)m_pDocument;
 }
 #endif //_DEBUG
 
-
-// CMFCPaintView 메시지 처리기
-
-
+//************* 선 굵기 *************
 void CMFCPaintView::OnLine1()
 {
-    m_nPenWidth = 1; // 선 굵기를 1로 설정
+    m_PenWidth = 1;
 }
-
 
 void CMFCPaintView::OnLine10()
 {
-    m_nPenWidth = 10; // 선 굵기를 1로 설정
+    m_PenWidth = 10;
 }
-
 
 void CMFCPaintView::OnLine15()
 {
-    m_nPenWidth = 15; // 선 굵기를 1로 설정
+    m_PenWidth = 15;
 }
+//************* 선 굵기 *************
 
-
+//************** 그리기 **************
 void CMFCPaintView::OnRect()
 {
-    // TODO: 여기에 명령 처리기 코드를 추가합니다.
+    m_isRect = true;
+    m_isEllipse = false;
+    m_isLine = false;
 }
-
 
 void CMFCPaintView::OnEllipse()
 {
-    // TODO: 여기에 명령 처리기 코드를 추가합니다.
+    m_isRect = false;
+    m_isEllipse = true;
+    m_isLine = false;
 }
+
+void CMFCPaintView::OnLine()
+{
+    m_isRect = false;
+    m_isEllipse = false;
+    m_isLine = true;
+}
+
+
+void CMFCPaintView::OnRed()
+{
+    F_isRed = true;
+    FullColor = RGB(255, 0, 0);
+}
+
+
+void CMFCPaintView::OnBlue()
+{
+    F_isBlue = true;
+    FullColor = RGB(0, 0, 255);
+}
+
+
+void CMFCPaintView::OnGreen()
+{
+    F_isGreen = true;
+    FullColor = RGB(0, 255, 0);
+}
+
+void CMFCPaintView::OnLRed()
+{
+    isRed = true;
+    LineColor = RGB(255, 0, 0);
+}
+
+
+void CMFCPaintView::OnLBlue()
+{
+    isBlue = true;
+    LineColor = RGB(0, 0, 255);
+}
+
+
+void CMFCPaintView::OnLGreen()
+{
+    isGreen = true;
+    LineColor = RGB(0, 255, 0);
+}
+
+//************** 그리기 **************
+
+//**************** 메뉴 ****************
+void CMFCPaintView::OnFileNew()
+{
+    CRect rect;
+    GetClientRect(&rect);
+    m_BackBufferDC.FillSolidRect(&rect, RGB(255, 255, 255));
+    Invalidate(FALSE);
+}
+
+void CMFCPaintView::OnFileOpen()
+{
+    CFileDialog dlg(TRUE, _T("bmp"), NULL, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, _T("Image Files|*.bmp;*.jpg;*.png||"), this);
+    if (dlg.DoModal() == IDOK)
+    {
+        CString strFilePath = dlg.GetPathName();
+
+        // CImage를 사용하여 이미지 파일 로드
+        CImage image;
+        if (SUCCEEDED(image.Load(strFilePath)))
+        {
+            // 백 버퍼 DC에 이미지 그리기
+            CRect rect;
+            GetClientRect(&rect);
+
+            int nWidth = image.GetWidth();
+            int nHeight = image.GetHeight();
+     
+            // 이미지를 백 버퍼 DC에 그리기
+            image.Draw(m_BackBufferDC, 0, 0, nWidth, nHeight);
+
+            Invalidate(FALSE);
+        }
+        else
+        {
+            // 이미지 로드 실패 시 오류 메시지 표시
+            AfxMessageBox(_T("Failed to load the image file."));
+        }
+    }
+}
+
+void CMFCPaintView::OnFileSave()
+{
+    CFileDialog dlg(FALSE, _T("bmp"), NULL, OFN_OVERWRITEPROMPT, _T("Bitmap Files (*.bmp)|*.bmp||"), this);
+    if (dlg.DoModal() == IDOK)
+    {
+        CString strFilePath = dlg.GetPathName();
+
+        // 백 버퍼의 내용을 비트맵으로 저장
+        CRect rect;
+        GetClientRect(&rect);
+        CBitmap bitmap;
+        bitmap.CreateCompatibleBitmap(&m_BackBufferDC, rect.Width(), rect.Height());
+        CDC memDC;
+        memDC.CreateCompatibleDC(&m_BackBufferDC);
+        CBitmap* pOldBitmap = memDC.SelectObject(&bitmap);
+        memDC.BitBlt(0, 0, rect.Width(), rect.Height(), &m_BackBufferDC, 0, 0, SRCCOPY);
+        memDC.SelectObject(pOldBitmap);
+
+        // 비트맵을 파일로 저장
+        CImage image;
+        image.Attach(bitmap);
+        image.Save(strFilePath);
+        image.Detach();
+    }
+}
+//**************** 메뉴 ****************
+
