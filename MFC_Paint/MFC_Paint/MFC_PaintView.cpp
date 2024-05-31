@@ -175,21 +175,21 @@ void CMFCPaintView::OnMouseMove(UINT nFlags, CPoint point)
         // 마우스 위치를 벡터에 추가.
         if (m_isLine)
         {
-            m_points.push_back(point);
+            m_points.push_back(point); // 마우스 움직을 m_points에다가 계속 넣을거.
 
         }
-
+        //*********** 마우스 좌표값을 텍스트 파일로 저장 ***********
         CString strFilePath = _T("a.txt");
         CStdioFile file;
         if (file.Open(strFilePath, CFile::modeWrite | CFile::modeCreate | CFile::modeNoTruncate))
         {
             file.SeekToEnd();
             CString strPoint;
-            strPoint.Format(_T("%d,%d\n"), point.x, point.y);
+            strPoint.Format(_T("%d,%d\n"), point.x, point.y); // 좌표를 문자열 형식으로 변환해 저장.
             file.WriteString(strPoint);
             file.Close();
         }
-
+        //*********** 마우스 좌표값을 텍스트 파일로 저장 ***********
     }
     else if (m_isErasing)
     {
@@ -439,7 +439,7 @@ void CMFCPaintView::OnFileSave()
         image.Detach();
     }
 }
-
+//*********** 마우스 좌표값을 저장한 텍스트 파일 읽기 ***********
 void CMFCPaintView::OnVsave()
 {
     CString strFilePath = _T("a.txt");
@@ -451,27 +451,27 @@ void CMFCPaintView::OnVsave()
         CPen* pOldPen = dc.SelectObject(&pen);
 
         CString strLine;
-        while (file.ReadString(strLine))
+        while (file.ReadString(strLine)) // 한 줄 씩 읽기.
         {
-            int commaPos = strLine.Find(',');
+            int commaPos = strLine.Find(','); // 콤마 기준으로 나눔
             if (commaPos != -1)
             {
-                int x = _ttoi(strLine.Left(commaPos));
-                int y = _ttoi(strLine.Mid(commaPos + 1));
+                int x = _ttoi(strLine.Left(commaPos)); // 문자열을 정수로
+                int y = _ttoi(strLine.Mid(commaPos + 1)); // ""
 
                 if (dc.m_hDC != NULL)
                 {
                     if (m_points.empty())
                     {
-                        dc.MoveTo(x, y);
+                        dc.MoveTo(x, y); // 이동
                     }
                     else
                     {
-                        dc.LineTo(x, y);
+                        dc.LineTo(x, y); // 그리기
                     }
                 }
 
-                m_points.push_back(CPoint(x, y));
+                m_points.push_back(CPoint(x, y)); // 읽은건 추가
             }
         }
 
@@ -479,4 +479,5 @@ void CMFCPaintView::OnVsave()
         file.Close();
     }
 }
+//*********** 마우스 좌표값을 저장한 텍스트 파일 읽기 ***********
 //**************** 메뉴 ****************
