@@ -40,7 +40,7 @@ public:
 
     // 선 색상
     COLORREF LineColor = 0x00000000;
-    COLORREF FullColor = RGB(255,255,255);//NULL_BRUSH
+    COLORREF FullColor = NULL_BRUSH;//NULL_BRUSH
 
     CBitmap m_BackBuffer;        // 더블 버퍼링을 위한 비트맵
     CDC m_BackBufferDC;          // 더블 버퍼링을 위한 DC
@@ -85,4 +85,5 @@ public:
     afx_msg void OnLRed();
     afx_msg void OnLBlue();
     afx_msg void OnLGreen();
+    afx_msg void OnVsave();
 };

@@ -49,10 +49,11 @@ BEGIN_MESSAGE_MAP(CMFCPaintView, CView)
     ON_COMMAND(ID_L_Red, &CMFCPaintView::OnLRed)
     ON_COMMAND(ID_L_Blue, &CMFCPaintView::OnLBlue)
     ON_COMMAND(ID_L_Green, &CMFCPaintView::OnLGreen)
+    ON_COMMAND(ID_VSave, &CMFCPaintView::OnVsave)
 END_MESSAGE_MAP()
 
 CMFCPaintView::CMFCPaintView() noexcept
-    : m_isDrawing(false), m_isErasing(false), m_PenWidth(1), m_isRect(false), m_isEllipse(false), m_isLine(true), isRed(false), isBlue(false), isGreen(false)
+    : m_isDrawing(false), m_isErasing(false), m_PenWidth(1), m_isRect(false), m_isEllipse(false), m_isLine(true), isRed(false), isBlue(false), isGreen(false), F_isRed(false), F_isBlue(false), F_isGreen(false)
 {
 }
 
@@ -126,8 +127,21 @@ void CMFCPaintView::OnMouseMove(UINT nFlags, CPoint point)
 
         //CBrush* pOldBrush = tempDC.SelectObject(CBrush::FromHandle((HBRUSH)GetStockObject(NULL_BRUSH)));
 
+        //CBrush brush;
+        //brush.CreateStockObject(FullColor);
+        //CBrush* pOldBrush = tempDC.SelectObject(&brush);
+
         CBrush brush;
-        brush.CreateStockObject(NULL_BRUSH);
+        //brush.CreateStockObject(NULL_BRUSH);
+
+        if (F_isRed || F_isBlue || F_isGreen)
+        {
+            brush.CreateSolidBrush(FullColor); // 원하는 색상으로 변경하세요.
+        }
+        else
+        {
+            brush.CreateStockObject(NULL_BRUSH);
+        }
         CBrush* pOldBrush = tempDC.SelectObject(&brush);
 
         if (m_isRect)
@@ -152,7 +166,7 @@ void CMFCPaintView::OnMouseMove(UINT nFlags, CPoint point)
         }
 
         tempDC.SelectObject(pOldPen);
-        tempDC.SelectObject(pOldBrush);
+        //tempDC.SelectObject(pOldBrush);
 
         // 임시 버퍼 출력.
         CClientDC dc(this);
@@ -162,7 +176,20 @@ void CMFCPaintView::OnMouseMove(UINT nFlags, CPoint point)
         if (m_isLine)
         {
             m_points.push_back(point);
+
         }
+
+        CString strFilePath = _T("a.txt");
+        CStdioFile file;
+        if (file.Open(strFilePath, CFile::modeWrite | CFile::modeCreate | CFile::modeNoTruncate))
+        {
+            file.SeekToEnd();
+            CString strPoint;
+            strPoint.Format(_T("%d,%d\n"), point.x, point.y);
+            file.WriteString(strPoint);
+            file.Close();
+        }
+
     }
     else if (m_isErasing)
     {
@@ -192,12 +219,21 @@ void CMFCPaintView::OnLButtonUp(UINT nFlags, CPoint point)
         //CBrush* pOldBrush = m_BackBufferDC.SelectObject(CBrush::FromHandle((HBRUSH)GetStockObject(NULL_BRUSH)));
 
         CBrush brush;
-        brush.CreateStockObject(NULL_BRUSH);
+        //brush.CreateStockObject(NULL_BRUSH);
+
+        if (F_isRed || F_isBlue || F_isGreen)
+        {
+            brush.CreateSolidBrush(FullColor); // 원하는 색상으로 변경하세요.
+        }
+        else
+        {
+            brush.CreateStockObject(NULL_BRUSH);
+        }
         CBrush* pOldBrush = m_BackBufferDC.SelectObject(&brush);
 
         if (m_isRect)
         {
-                m_BackBufferDC.Rectangle(CRect(m_startPoint, m_endPoint));
+            m_BackBufferDC.Rectangle(CRect(m_startPoint, m_endPoint));
         }
         else if (m_isEllipse)
         {
@@ -218,7 +254,7 @@ void CMFCPaintView::OnLButtonUp(UINT nFlags, CPoint point)
 
         m_BackBufferDC.SelectObject(pOldPen);
         m_BackBufferDC.SelectObject(pOldBrush);
-
+        
         Invalidate(FALSE);
     }
 
@@ -300,20 +336,17 @@ void CMFCPaintView::OnLine()
     m_isLine = true;
 }
 
-
 void CMFCPaintView::OnRed()
 {
     F_isRed = true;
     FullColor = RGB(255, 0, 0);
 }
 
-
 void CMFCPaintView::OnBlue()
 {
     F_isBlue = true;
     FullColor = RGB(0, 0, 255);
 }
-
 
 void CMFCPaintView::OnGreen()
 {
@@ -327,13 +360,11 @@ void CMFCPaintView::OnLRed()
     LineColor = RGB(255, 0, 0);
 }
 
-
 void CMFCPaintView::OnLBlue()
 {
     isBlue = true;
     LineColor = RGB(0, 0, 255);
 }
-
 
 void CMFCPaintView::OnLGreen()
 {
@@ -408,5 +439,44 @@ void CMFCPaintView::OnFileSave()
         image.Detach();
     }
 }
-//**************** 메뉴 ****************
 
+void CMFCPaintView::OnVsave()
+{
+    CString strFilePath = _T("a.txt");
+    CStdioFile file;
+    if (file.Open(strFilePath, CFile::modeRead))
+    {
+        CClientDC dc(this);
+        CPen pen(PS_SOLID, m_PenWidth, LineColor);
+        CPen* pOldPen = dc.SelectObject(&pen);
+
+        CString strLine;
+        while (file.ReadString(strLine))
+        {
+            int commaPos = strLine.Find(',');
+            if (commaPos != -1)
+            {
+                int x = _ttoi(strLine.Left(commaPos));
+                int y = _ttoi(strLine.Mid(commaPos + 1));
+
+                if (dc.m_hDC != NULL)
+                {
+                    if (m_points.empty())
+                    {
+                        dc.MoveTo(x, y);
+                    }
+                    else
+                    {
+                        dc.LineTo(x, y);
+                    }
+                }
+
+                m_points.push_back(CPoint(x, y));
+            }
+        }
+
+        dc.SelectObject(pOldPen);
+        file.Close();
+    }
+}
+//**************** 메뉴 ****************
