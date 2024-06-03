@@ -209,6 +209,18 @@ void CMFCPaintView::OnLButtonUp(UINT nFlags, CPoint point)
 {
     if (m_isDrawing)
     {
+
+        CString strFilePath = _T("a.txt");
+        CStdioFile file;
+        if (file.Open(strFilePath, CFile::modeWrite | CFile::modeCreate | CFile::modeNoTruncate))
+        {
+            file.SeekToEnd();
+            CString strPoint;
+            strPoint.Format(_T("%d,%d\n"), -point.x, -point.y); // 좌표를 문자열 형식으로 변환해 저장.
+            file.WriteString(strPoint);
+            file.Close();
+        }
+
         m_endPoint = point;
         m_isDrawing = false;
 
@@ -461,16 +473,16 @@ void CMFCPaintView::OnVsave()
 
                 if (dc.m_hDC != NULL)
                 {
-                    if (m_points.empty())
+                    if (x<0 && y<0)
                     {
-                        dc.MoveTo(x, y); // 이동
+                        dc.MoveTo(-x, -y); // 이동
                     }
                     else
                     {
                         dc.LineTo(x, y); // 그리기
+                        dc.MoveTo(x, y); // 이동
                     }
                 }
-
                 m_points.push_back(CPoint(x, y)); // 읽은건 추가
             }
         }
