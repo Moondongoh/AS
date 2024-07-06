@@ -2,62 +2,72 @@ import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
 
-# 아이리스 데이터셋 로드
 iris = load_iris()
-data = iris.data
-target = iris.target
-feature_names = iris.feature_names
+df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
+#df['target'] = iris.target
 
-# 데이터프레임으로 변환
-df = pd.DataFrame(data, columns=feature_names)
-df['class'] = target
+df1 = df.iloc[:50]
+df2 = df.iloc[50:100]
+df3 = df.iloc[100:150]
 
-# 클래스 레이블을 a, b, c로 변환
-class_mapping = {0: 'a', 1: 'b', 2: 'c'}
-df['class'] = df['class'].map(class_mapping)
+# 각 속성의 합 계산
+sum_df1 = df1.sum()
+sum_df2 = df2.sum()
+sum_df3 = df3.sum()
 
-# 각 클래스별로 데이터 분리
-df_a = df[df['class'] == 'a']
-df_b = df[df['class'] == 'b']
-df_c = df[df['class'] == 'c']
+# 각 속성의 평균 계산
+mean_df1 = sum_df1 / 50
+mean_df2 = sum_df2 / 50
+mean_df3 = sum_df3 / 50
 
-# 각 클래스별 평균, 분산, 표준편차 계산
-mean_a = df_a[feature_names].mean()
-variance_a = df_a[feature_names].var()
-std_deviation_a = df_a[feature_names].std()
+print("********************평균********************")
+print("Data A의 50개 평균:")
+print(mean_df1)
 
-mean_b = df_b[feature_names].mean()
-variance_b = df_b[feature_names].var()
-std_deviation_b = df_b[feature_names].std()
+print("\nData B의 50개 평균:")
+print(mean_df2)
 
-mean_c = df_c[feature_names].mean()
-variance_c = df_c[feature_names].var()
-std_deviation_c = df_c[feature_names].std()
+print("\nData C의 50개 평균:")
+print(mean_df3)
+print("\n")
 
-# 결과 출력
-print("아이리스 데이터셋의 클래스 a 데이터:")
-print(df_a)
-print("\n클래스 a의 각 특성별 평균:")
-print(mean_a)
-print("\n클래스 a의 각 특성별 분산:")
-print(variance_a)
-print("\n클래스 a의 각 특성별 표준편차:")
-print(std_deviation_a)
+# 각 값에서 평균을 빼고 제곱 후 모두 더한 뒤 전체 데이터 수로 나눠줌.
+def calculate_variance(data):
+    mean = data.mean()
+    variance = np.sum((data - mean) ** 2) / len(data)
+    return variance
 
-print("\n아이리스 데이터셋의 클래스 b 데이터:")
-print(df_b)
-print("\n클래스 b의 각 특성별 평균:")
-print(mean_b)
-print("\n클래스 b의 각 특성별 분산:")
-print(variance_b)
-print("\n클래스 b의 각 특성별 표준편차:")
-print(std_deviation_b)
+# 각 속성의 분산 계산
+var_df1 = df1.apply(calculate_variance)
+var_df2 = df2.apply(calculate_variance)
+var_df3 = df3.apply(calculate_variance)
 
-print("\n아이리스 데이터셋의 클래스 c 데이터:")
-print(df_c)
-print("\n클래스 c의 각 특성별 평균:")
-print(mean_c)
-print("\n클래스 c의 각 특성별 분산:")
-print(variance_c)
-print("\n클래스 c의 각 특성별 표준편차:")
-print(std_deviation_c)
+print("********************분산********************")
+print("\nData A의 50개 분산 값:")
+print(var_df1)
+
+print("\nData A의 50개 분산 값:")
+print(var_df2)
+
+print("\nData A의 50개 분산 값:")
+print(var_df3)
+print("\n")
+
+# 표준편차 루트 씌우기 sqrt
+def calculate_variance_root(variance):
+    return np.sqrt(variance)
+
+# 각 속성의 분산 계산
+var_df4 = var_df1.apply(calculate_variance_root)
+var_df5 = var_df2.apply(calculate_variance_root)
+var_df6 = var_df3.apply(calculate_variance_root)
+
+print("********************표준편차********************")
+print("\nData A의 50개 표준편차 값:")
+print(var_df4)
+
+print("\nData A의 50개 표준편차 값:")
+print(var_df5)
+
+print("\nData A의 50개 표준편차 값:")
+print(var_df6)
