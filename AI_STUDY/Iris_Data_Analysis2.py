@@ -1,3 +1,4 @@
+# IRIS DATA 값을 활용해 각 파트별 평균, 분산, 표준편차를 구하는 코드
 import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
