@@ -3,9 +3,17 @@ import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
 
+#pd.set_option('display.max_rows', None)
+#pd.set_option('display.max_columns', None)
+
 iris = load_iris()
 df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
 #df['target'] = iris.target
+
+#데이터 내용
+print("************************************************************")
+print(df)
+print("************************************************************")
 
 df1 = df.iloc[:50]
 df2 = df.iloc[50:100]
