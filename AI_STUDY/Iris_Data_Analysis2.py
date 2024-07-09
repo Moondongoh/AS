@@ -43,6 +43,7 @@ print("\n")
 # 각 값에서 평균을 빼고 제곱 후 모두 더한 뒤 전체 데이터 수로 나눠줌.
 def calculate_variance(data):
     mean = data.mean()
+    #모든거 더하기 np.sum
     variance = np.sum((data - mean) ** 2) / len(data)
     return variance
 
