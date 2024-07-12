@@ -23,7 +23,9 @@ c_30, c_20 = train_test_split(c, test_size=20)
 def perform_regression_A(group_30):
     X = group_30[['petal length (cm)']]
     y = group_30['petal width (cm)']
+    
     reg = LinearRegression().fit(X, y)
+    
     # 'coef' 회귀 계수, 'intercept' 절편
     regression_equation = f"y = {reg.coef_[0]:.4f}x + {reg.intercept_:.4f}"
     return regression_equation
@@ -55,7 +57,7 @@ reg_c = perform_regression_B(c_30)
 def calculate_errors(group_20, reg):
     X_test = group_20[['petal length (cm)']]
     y_true = group_20['petal width (cm)']
-    y_pred = reg.predict(X _test)
+    y_pred = reg.predict(X_test)
     errors = (y_true - y_pred) ** 2
     return errors.sum()
 
