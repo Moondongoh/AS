@@ -19,45 +19,46 @@ class MultiLayerPerceptron:
     def sigmoid_derivative(self, x):
         return x * (1 - x)
     
-    def relu(self, x):
-        return np.maximum(0, x)
-    
-    def relu_derivative(self, x):
-        return np.where(x > 0, 1, 0)
-    
     def forward(self, input_data):
+        # 첫 번째 은닉층
         self.hidden_layer_input = np.dot(input_data, self.weights1) + self.bias1
-        self.hidden_layer_output = self.relu(self.hidden_layer_input)
+        self.hidden_layer_output = self.sigmoid(self.hidden_layer_input)
         
+        # 출력층
         self.output_layer_input = np.dot(self.hidden_layer_output, self.weights2) + self.bias2
         self.predicted_output = self.sigmoid(self.output_layer_input)
         
         return self.predicted_output
     
     def backward(self, input_data, output_data):
+        # 오차 계산
         error = output_data - self.predicted_output
         
+        # 출력층의 기울기
         d_predicted_output = error * self.sigmoid_derivative(self.predicted_output)
         
+        # 두 번째 은닉층에서의 기울기
         d_weights2 = np.dot(self.hidden_layer_output.T, d_predicted_output)
         d_bias2 = np.sum(d_predicted_output, axis=0, keepdims=True)
         
-        d_hidden_layer_output = np.dot(d_predicted_output, self.weights2.T) * self.relu_derivative(self.hidden_layer_input)
+        # 첫 번째 은닉층에서의 기울기
+        d_hidden_layer_output = np.dot(d_predicted_output, self.weights2.T) * self.sigmoid_derivative(self.hidden_layer_output)
         d_weights1 = np.dot(input_data.T, d_hidden_layer_output)
         d_bias1 = np.sum(d_hidden_layer_output, axis=0, keepdims=True)
         
+        # 가중치와 편향 업데이트
         self.weights2 += self.learning_rate * d_weights2
         self.bias2 += self.learning_rate * d_bias2
         self.weights1 += self.learning_rate * d_weights1
         self.bias1 += self.learning_rate * d_bias1
     
-    def train(self, input_data, output_data, epochs=10000):
+    def train(self, input_data, output_data, epochs=100000):
         for epoch in range(epochs):
             self.forward(input_data)
             self.backward(input_data, output_data)
-            if (epoch + 1) % 1000 == 0:
+            if (epoch + 1) % 10000 == 0:
                 loss = np.mean(np.square(output_data - self.predicted_output))
-                print(f"Epoch {epoch + 1}, Loss: {loss}")
+                print(f"반복수 {epoch + 1}, 오차: {loss}")
     
     def predict(self, input_data):
         return self.forward(input_data)
@@ -67,11 +68,11 @@ input_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 output_data = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
 
 # 신경망 학습
-print("Training the network:")
+print("학습:")
 perceptron = MultiLayerPerceptron(input_size=2, hidden_size=3, output_size=2)
-perceptron.train(input_data, output_data, epochs=10000)
+perceptron.train(input_data, output_data, epochs=100000)
 
 # 예측
 predictions = perceptron.predict(input_data)
-print("Predictions:")
+print("예측값:")
 print(predictions)
