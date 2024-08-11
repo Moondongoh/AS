@@ -8,24 +8,33 @@ class MultiLayerPerceptron:
         self.learning_rate = learning_rate
         
         np.random.seed(42)
+        # 입력층과 첫 번째 은닉층 사이의 가중치 행렬
         self.weights1 = np.random.randn(input_size, hidden_size)
+        # 은 편
         self.bias1 = np.zeros((1, hidden_size))
+        # 첫 번째 은닉층과 출력층 사이의 가중치 행렬.
         self.weights2 = np.random.randn(hidden_size, output_size)
+        # 출 편
         self.bias2 = np.zeros((1, output_size))
     
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
     
+    # 미분 값
     def sigmoid_derivative(self, x):
         return x * (1 - x)
     
     def forward(self, input_data):
         # 첫 번째 은닉층
+        # 입력 데이터와 첫 번째 은닉층 가중치의 곱과 편향을 더한 값.
         self.hidden_layer_input = np.dot(input_data, self.weights1) + self.bias1
+        # 시그모이드 활성화 함수를 적용한 값.
         self.hidden_layer_output = self.sigmoid(self.hidden_layer_input)
         
         # 출력층
+        # 은닉층 출력과 출력층 가중치의 곱과 편향을 더한 값.
         self.output_layer_input = np.dot(self.hidden_layer_output, self.weights2) + self.bias2
+        # 시그모이드 활성화 함수를 적용한 최종 출력값.
         self.predicted_output = self.sigmoid(self.output_layer_input)
         
         return self.predicted_output
@@ -34,7 +43,7 @@ class MultiLayerPerceptron:
         # 오차 계산
         error = output_data - self.predicted_output
         
-        # 출력층의 기울기
+        # 출력층의 기울기, 오차에 시그모이드 도함수를 곱한 값
         d_predicted_output = error * self.sigmoid_derivative(self.predicted_output)
         
         # 두 번째 은닉층에서의 기울기
