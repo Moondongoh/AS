@@ -107,7 +107,7 @@ loss = -np.mean(np.log(mlp.forward(X_test_subset)[np.arange(num_samples), y_test
 print(f'\n테스트셋의 정확도: {accuracy_subset:.4f}')
 print(f'테스트셋의 손실율: {loss:.4f}')
 
-# 성공과 실패 개수 출력
+# 성공과 실패 개수 출력.
 success_count = np.sum(y_pred_subset == y_test_subset)
 failure_count = num_samples - success_count
 print(f'1만 개 샘플 중 성공 개수: {success_count}')
