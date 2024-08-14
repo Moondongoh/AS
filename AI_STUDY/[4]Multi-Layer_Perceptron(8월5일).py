@@ -2,51 +2,57 @@ import numpy as np
 
 class MultiLayerPerceptron:
     def __init__(self, input_size, hidden_layer_size, output_size, learning_rate):
-        # 입력, 은닉, 출력층의 크기를 상수로 받고 학습률을 선정하기 위해서
         self.input_size = input_size
         self.hidden_layer_size = hidden_layer_size
         self.output_size = output_size
         self.learning_rate = learning_rate
         
-        # 가중치 초기화 (초기값은 랜덤하게 받음)
         self.w1 = np.random.rand(input_size, hidden_layer_size)
         self.w2 = np.random.rand(hidden_layer_size, output_size)
         
-        # 시그모이드 함수
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
     
-        # 시그모이드 도함수 (미분 역전파에 사용)
-        # 은닉층 오차 = 출력층 기울기 * 가중치 * 활성 함수의 도함수
     def sigmoid_derivative(self, x):
         return x * (1 - x)
     
     def forward_propagation(self, inputs):
-        # 입력 데이터와 첫 번째 가중치 행렬의 곱
-        self.z1 = np.dot(inputs, self.w1)
-        # 첫 번째 은닉층의 활성화
+        self.z1 = np.zeros((inputs.shape[0], self.hidden_layer_size))
+        for i in range(inputs.shape[0]):
+            for j in range(self.hidden_layer_size):
+                self.z1[i][j] = sum(inputs[i][k] * self.w1[k][j] for k in range(self.input_size))
+        
         self.a1 = self.sigmoid(self.z1)
-        # 은닉층과 두 번째 가중치 행렬의 곱
-        self.z2 = np.dot(self.a1, self.w2)
-        # 출력층의 활성화 
+        
+        self.z2 = np.zeros((self.a1.shape[0], self.output_size))
+        for i in range(self.a1.shape[0]):
+            for j in range(self.output_size):
+                self.z2[i][j] = sum(self.a1[i][k] * self.w2[k][j] for k in range(self.hidden_layer_size))
+        
         self.a2 = self.sigmoid(self.z2)
-        # 출력층의 활성화 값
         return self.a2
     
     def backward_propagation(self, inputs, outputs):
-        # 출력층 오차 구함
         output_error = outputs - self.a2
-        # 기울기? 출력층 에러에 도함수를 곱하면 뉴런의 기울기가 나오는데 이걸로 가중치 업데이트
         output_delta = output_error * self.sigmoid_derivative(self.a2)
-
-        # 은닉층 오차 구함
-        hidden_error = output_delta.dot(self.w2.T)
-        # 은닉층의 각 뉴런의 기울기
+        
+        hidden_error = np.zeros((output_delta.shape[0], self.hidden_layer_size))
+        for i in range(output_delta.shape[0]):
+            for j in range(self.hidden_layer_size):
+                hidden_error[i][j] = sum(output_delta[i][k] * self.w2[j][k] for k in range(self.output_size))
+        
         hidden_delta = hidden_error * self.sigmoid_derivative(self.a1)
 
-        self.w2 += self.a1.T.dot(output_delta) * self.learning_rate
-        self.w1 += inputs.T.dot(hidden_delta) * self.learning_rate
-
+        for i in range(self.w2.shape[0]):
+            for j in range(self.w2.shape[1]):
+                for k in range(self.a1.shape[0]):
+                    self.w2[i][j] += self.a1[k][i] * output_delta[k][j] * self.learning_rate
+        
+        for i in range(self.w1.shape[0]):
+            for j in range(self.w1.shape[1]):
+                for k in range(inputs.shape[0]):
+                    self.w1[i][j] += inputs[k][i] * hidden_delta[k][j] * self.learning_rate
+        
         return hidden_error
     
     def train(self, inputs, outputs, epochs):

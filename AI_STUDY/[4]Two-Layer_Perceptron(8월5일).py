@@ -1,3 +1,4 @@
+# 2 3 1
 import numpy as np
 
 class MultiLayerPerceptron:
