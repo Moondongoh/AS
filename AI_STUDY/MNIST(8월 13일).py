@@ -37,7 +37,7 @@ class SimpleMLP:
         self.weights.append(np.random.randn(prev_size, output_size) * np.sqrt(2. / prev_size))
         self.biases.append(np.zeros((1, output_size)))
 
-    def relu(self, z):
+    def relu(self, z): #<<<<<<<<<<<<<<<시그모이드로 바꿔야함
         return np.maximum(0, z)
 
     def relu_derivative(self, z):
