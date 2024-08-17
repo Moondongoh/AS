@@ -12,7 +12,8 @@ y = mnist.target.astype(int)  # 레이블을 정수형으로 변환
 
 # 데이터 전처리
 scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)  # 데이터 표준화
+# 데이터 표준화
+X_scaled = scaler.fit_transform(X) 
 
 # 데이터 분할
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
