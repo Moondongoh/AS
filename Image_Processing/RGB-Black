@@ -10,13 +10,13 @@ const T& clamp(const T& v, const T& lo, const T& hi) {
     return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
-class ModifyImg {
+class change {
 public:
     BITMAPFILEHEADER fileHeader;
     BITMAPINFOHEADER infoHeader;
     std::ifstream bmpFile;
 
-    ModifyImg(const std::string& filename) {
+    change(const std::string& filename) {
         bmpFile.open(filename, std::ios::binary);
         if (!bmpFile) {
             throw std::runtime_error("파일을 열 수 없습니다.");
@@ -25,7 +25,7 @@ public:
         bmpFile.read(reinterpret_cast<char*>(&infoHeader), sizeof(infoHeader));
     }
 
-    ~ModifyImg() {
+    ~change() {
         if (bmpFile.is_open()) {
             bmpFile.close();
         }
