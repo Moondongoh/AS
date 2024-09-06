@@ -28,6 +28,6 @@ print("Convolution Result:")
 print(conv)
 
 # 맥스풀링 적용 (2x2 커널, 스트라이드 2)
-max_pool = F.max_pool2d(conv, kernel_size=2, stride=2)
+max_pool = F.max_pool2d(conv, kernel_size=3, stride=2)
 print("\nMax Pooling Result:")
 print(max_pool)
