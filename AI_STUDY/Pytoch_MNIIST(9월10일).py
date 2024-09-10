@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
-# MNIST 데이터셋을 로드합니다.
+# MNIST 데이터 load
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,))
@@ -17,29 +17,35 @@ test_dataset = datasets.MNIST(root='./data', train=False, download=True, transfo
 train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=1000, shuffle=False)
 
-# CNN 모델 정의
+# CNN
 class CNNModel(nn.Module):
     def __init__(self):
         super(CNNModel, self).__init__()
-        # 첫 번째 컨볼루션 레이어: 입력 채널 1 (MNIST 이미지는 흑백), 출력 채널 32, 커널 사이즈 3x3
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
-        # 두 번째 컨볼루션 레이어: 입력 채널 32, 출력 채널 64, 커널 사이즈 3x3
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        # MaxPooling 레이어
+        # 입력 채널 1 (MNIST 이미지는 흑백), 출력 채널 4, 커널 사이즈 3x3
+        self.conv1 = nn.Conv2d(1, 4, kernel_size=3, padding=1)
+        # 입력 채널 4, 출력 채널 8, 커널 사이즈 3x3
+        self.conv2 = nn.Conv2d(4, 8, kernel_size=3, padding=1)
+        # MaxPooling 레이어 2X2
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        # 완전 연결 레이어
-        self.fc1 = nn.Linear(64 * 7 * 7, 128)  # 두 번째 풀링 후 64채널 7x7 크기
+        # 완전 연결 레이어 392 -> 128 -> 10
+        self.fc1 = nn.Linear(8 * 7 * 7, 128)  # 두 번째 풀링 후 8채널 7x7 크기
         self.fc2 = nn.Linear(128, 10)  # 10개의 클래스로 분류 (MNIST 숫자 0-9)
 
     def forward(self, x):
-        # 첫 번째 컨볼루션 + ReLU + MaxPooling
-        x = self.pool(F.relu(self.conv1(x)))
-        # 두 번째 컨볼루션 + ReLU + MaxPooling
-        x = self.pool(F.relu(self.conv2(x)))
-        # 텐서를 평탄화
-        x = x.view(-1, 64 * 7 * 7)
+        # 첫 번째 컨볼루션 + Sigmoid + MaxPooling 
+        #x = self.pool(torch.sigmoid(self.conv1(x)))
+        # 시그모이드x
+        x = self.pool(self.conv1(x))
+        # 두 번째 컨볼루션 + Sigmoid + MaxPooling
+        #x = self.pool(torch.sigmoid(self.conv2(x)))
+        # 시그모이드x
+        x = self.pool(self.conv2(x))
+        # 1차원으로 변환
+        x = x.view(-1, 8 * 7 * 7)
         # 완전 연결 레이어 통과
-        x = F.relu(self.fc1(x))
+        x = torch.sigmoid(x)
+        x = self.fc1(x)
+        x = torch.sigmoid(x)
         x = self.fc2(x)
         return x
 
@@ -85,12 +91,12 @@ def test(model, device, test_loader):
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
-    print(f'\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n')
+    print(f'\nTest set: Average loss: {test_loss:.8f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n')
 
 # 학습 및 테스트 실행
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
-for epoch in range(1, 11):  # 10 에폭 학습
+for epoch in range(1, 31):  # 10 에폭 학습
     train(model, device, train_loader, optimizer, epoch)
     test(model, device, test_loader)
