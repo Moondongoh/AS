@@ -97,6 +97,6 @@ def test(model, device, test_loader):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
-for epoch in range(1, 31):  # 10 에폭 학습
+for epoch in range(1, 11):  # 10 에폭 학습
     train(model, device, train_loader, optimizer, epoch)
     test(model, device, test_loader)
