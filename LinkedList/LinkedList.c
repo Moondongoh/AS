@@ -1,10 +1,6 @@
 #include<stdlib.h>
 #include "LinkedList.h"
 
-/*
-* 
-*/
-
 //1번 앞 노드 데이터 추가
 void addFirstNode(D_Node** head, long long data)
 {
@@ -14,10 +10,6 @@ void addFirstNode(D_Node** head, long long data)
     newNode->next = *head;                                             // 현재 헤드를 새로운 노드의 다음으로 설정
     *head = newNode;                                                   // 헤드를 새로운 노드로 업데이트
 }
-
-/*
-*
-*/
 
 // 2번 뒤 노드 데이터 추가
 void addLastNode(D_Node** head, long long data) {
@@ -41,10 +33,6 @@ void addLastNode(D_Node** head, long long data) {
         cur->next = newNode;
     }
 }
-
-/*
-*
-*/
 
 // 3번 기준 노드 앞 데이터 추가
 void addBeforeNode(D_Node** head, long long searchData, long long data) {
@@ -84,10 +72,6 @@ void addBeforeNode(D_Node** head, long long searchData, long long data) {
     }
 }
 
-/*
-*
-*/
-
 // 4번 기준 노드 뒤 데이터 추가
 void addAfterNode(D_Node* head, long long searchData, long long data) {
     D_Node* cur = head;
@@ -118,10 +102,6 @@ void addAfterNode(D_Node* head, long long searchData, long long data) {
     }
 }
 
-/*
-*
-*/
-
 // 5번 앞 노드 데이터 삭제
 void deleteFirstNode(D_Node** head) {
     if (*head == NULL) {
@@ -133,10 +113,6 @@ void deleteFirstNode(D_Node** head) {
     free(*head);
     *head = newHead;
 }
-
-/*
-*
-*/
 
 // 6번 뒤 노드 데이터 삭제
 void deleteLastNode(D_Node** head)
@@ -206,10 +182,6 @@ void deleteSearchNode(D_Node** head, int position)
     free(cur);
 }
 
-/*
-*
-*/
-
 // 8번 모든 노드 데이터 삭제
 void deleteALLNode(D_Node** head)
 {
@@ -224,10 +196,6 @@ void deleteALLNode(D_Node** head)
         prev = *head;
     }
 }
-
-/*
-*
-*/
 
 // 9번 임의 노드 데이터 수정 //수정 완료
 void ModifyNode(D_Node* head)
@@ -282,10 +250,6 @@ void PrintSearchNode(D_Node* head, int position2)
     }
 }
 
-/*
-*
-*/
-
 // 11번 순회
 void printList(D_Node* head)
 {
@@ -307,11 +271,7 @@ void printList(D_Node* head)
     printf("MAX : %d\n", max);
 }
 
-/*
-*
-*/
-
-// 12번 단일 선형 탐색?
+// 12번 단일 선형 탐색
 void LinearSearch(D_Node* head, int position4, int searchData)
 {
 
@@ -344,10 +304,6 @@ void LinearSearch(D_Node* head, int position4, int searchData)
     }
 }
 
-/*
-*
-*/
-
 // 13번 다중 선형 탐색
 void MultipleLinearSearch(D_Node* head, int searchData)
 {
@@ -371,10 +327,6 @@ void MultipleLinearSearch(D_Node* head, int searchData)
         printf("일치하는 노드를 찾을 수 없습니다.\n");
     }
 }
-
-/*
-*
-*/
 
 // 14번 단일 이진 탐색
 void binarySearch(D_Node* head, int searchData) {
@@ -419,10 +371,6 @@ void binarySearch(D_Node* head, int searchData) {
         printf("일치하는 노드를 찾을 수 없습니다.\n");
     }
 }
-
-/*
-* 이게 제일 문제
-*/
 
 // 15번 다중 이진 탐색
 void multipleBinarySearch(D_Node* head, int searchData) {
@@ -485,10 +433,6 @@ void multipleBinarySearch(D_Node* head, int searchData) {
     printf("일치하는 노드를 찾을 수 없습니다.\n");
 }
 
-/*
-* 
-*/
-
 // 16번 버블 정렬
 void bubbleSort(D_Node** head)
 {
@@ -522,10 +466,6 @@ void bubbleSort(D_Node** head)
     } while (swapped);
 }
 
-/*
-* 
-*/
-
 // 정렬된 연결리스트에 새로운 값을 삽입함.
 void sortedInsert(D_Node** head, int data)
 {
@@ -549,10 +489,6 @@ void sortedInsert(D_Node** head, int data)
         cur->next = newNode;
     }
 }
-
-/*
-* 
-*/
 
 // 17번 삽입 정렬
 void insertionSort(D_Node** head)
@@ -617,6 +553,7 @@ void selectionSort(D_Node** head)
 * 다음노드로 움직이면서
 * count를 올리면서 셈
 */
+
 // 노드 수 세기
 int countNodes(D_Node* head) {
     int count = 0;

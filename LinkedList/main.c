@@ -72,7 +72,7 @@ int main()
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-                printf("삐삑 오버플로우 발생했습니다 다시 하십쇼 휴먼\n");
+                printf("오버플로우 발생했습니다. 다시 입력하세요.\n");
                 while (getchar() != '\n');
                 continue;
             }
@@ -80,7 +80,7 @@ int main()
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-                printf("삐삑 오버플로우 발생했습니다 다시 하십쇼 휴먼\n");
+                printf("오버플로우 발생했습니다. 다시 입력하세요.\n");
                 while (getchar() != '\n');
                 continue;
             }
@@ -112,7 +112,7 @@ int main()
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-                printf("삐삑 오버플로우 발생했습니다 다시 하십쇼 휴먼\n");
+                printf("오버플로우 발생했습니다. 다시 입력하세요.\n");
                 while (getchar() != '\n');
                 continue;
             }
@@ -120,7 +120,7 @@ int main()
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-                printf("삐삑 오버플로우 발생했습니다 다시 하십쇼 휴먼\n");
+                printf("오버플로우 발생했습니다. 다시 입력하세요.\n");
                 while (getchar() != '\n');
                 continue;
             }
@@ -156,7 +156,7 @@ int main()
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-                printf("삐삑 오버플로우 발생했습니다 다시 하십쇼 휴먼\n");
+                printf("오버플로우 발생했습니다. 다시 입력하세요.\n");
                 while (getchar() != '\n');
                 continue;
             }
@@ -164,7 +164,7 @@ int main()
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-                printf("삐삑 오버플로우 발생했습니다 다시 하십쇼 휴먼\n");
+                printf("오버플로우 발생했습니다. 다시 입력하세요.\n");
                 while (getchar() != '\n');
                 continue;
             }
@@ -200,7 +200,7 @@ int main()
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-                printf("삐삑 오버플로우 발생했습니다 다시 하십쇼 휴먼\n");
+                printf("오버플로우 발생했습니다. 다시 입력하세요.\n");
                 while (getchar() != '\n');
                 continue;
             }
@@ -208,7 +208,7 @@ int main()
             {
                 system("cls");
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-                printf("삐삑 오버플로우 발생했습니다 다시 하십쇼 휴먼\n");
+                printf("오버플로우 발생했습니다. 다시 입력하세요.\n");
                 while (getchar() != '\n');
                 continue;
             }
