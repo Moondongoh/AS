@@ -5,6 +5,9 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 # MNIST 데이터 load
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -31,23 +34,58 @@ class CNNModel(nn.Module):
         self.fc1 = nn.Linear(8 * 7 * 7, 128)  # 두 번째 풀링 후 8채널 7x7 크기
         self.fc2 = nn.Linear(128, 10)  # 10개의 클래스로 분류 (MNIST 숫자 0-9)
 
+    # def forward(self, x):
+    #     # 첫 번째 컨볼루션 + Sigmoid + MaxPooling 
+    #     #x = self.pool(torch.sigmoid(self.conv1(x)))
+    #     # 시그모이드x
+    #     x = self.pool(self.conv1(x))
+    #     # 두 번째 컨볼루션 + Sigmoid + MaxPooling
+    #     #x = self.pool(torch.sigmoid(self.conv2(x)))
+    #     # 시그모이드x
+    #     x = self.pool(self.conv2(x))
+    #     # 1차원으로 변환
+    #     x = x.view(-1, 8 * 7 * 7)
+    #     # 완전 연결 레이어 통과
+    #     x = torch.sigmoid(x)
+    #     x = self.fc1(x)
+    #     x = torch.sigmoid(x)
+    #     x = self.fc2(x)
+    #     return x
+
     def forward(self, x):
-        # 첫 번째 컨볼루션 + Sigmoid + MaxPooling 
-        #x = self.pool(torch.sigmoid(self.conv1(x)))
-        # 시그모이드x
-        x = self.pool(self.conv1(x))
-        # 두 번째 컨볼루션 + Sigmoid + MaxPooling
-        #x = self.pool(torch.sigmoid(self.conv2(x)))
-        # 시그모이드x
-        x = self.pool(self.conv2(x))
-        # 1차원으로 변환
+        # 첫 번째 컨볼루션 + 풀링
+        x = self.conv1(x)
+        conv1_output = x  # conv1 출력 저장
+        x = self.pool(x)
+        
+        # 두 번째 컨볼루션 + 풀링
+        x = self.conv2(x)
+        conv2_output = x  # conv2 출력 저장
+        x = self.pool(x)
+        
         x = x.view(-1, 8 * 7 * 7)
-        # 완전 연결 레이어 통과
         x = torch.sigmoid(x)
         x = self.fc1(x)
         x = torch.sigmoid(x)
         x = self.fc2(x)
-        return x
+        
+        return x, conv1_output, conv2_output
+    
+# CNN 레이어의 필터 가중치를 시각화하는 함수
+def visualize_filter_weights(conv_layer, layer_name):
+    filters = conv_layer.weight.data.cpu().numpy()  # 필터 가중치 값을 가져옴 (NumPy로 변환)
+    num_filters = filters.shape[0]  # 필터 개수 (출력 채널 개수)
+    
+    fig, axes = plt.subplots(1, num_filters, figsize=(15, 5))
+    for i in range(num_filters):
+        ax = axes[i]
+        # 필터 가중치를 격자형 배열로 시각화
+        ax.imshow(filters[i, 0, :, :], cmap='coolwarm', interpolation='none')  # 첫 번째 입력 채널 필터만 시각화
+        ax.set_title(f"{layer_name} Filter {i}")
+        ax.axis('off')
+    plt.colorbar(ax.imshow(filters[0, 0, :, :], cmap='coolwarm', interpolation='none'), ax=axes, orientation='vertical', fraction=0.05, pad=0.05)
+    plt.show()
+
 
 # 타겟을 원-핫 인코딩으로 변환하는 함수
 def one_hot_encode(labels, num_classes):
@@ -64,15 +102,26 @@ def train(model, device, train_loader, optimizer, epoch):
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
-        output = model(data)
+
+        output, conv1_output, conv2_output = model(data)  # conv1, conv2 출력 받기
+
         # 타겟을 원-핫 인코딩으로 변환
         target_one_hot = one_hot_encode(target, 10).to(device)
         # MSE 손실 계산
         loss = criterion(output, target_one_hot)
         loss.backward()
         optimizer.step()
+        
         if batch_idx % 100 == 0:
             print(f'Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}')
+            
+            # 100번째 배치마다 필터 가중치 시각화
+            print("Visualizing conv1 filter weights...")
+            visualize_filter_weights(model.conv1, "Conv1")
+            
+            print("Visualizing conv2 filter weights...")
+            visualize_filter_weights(model.conv2, "Conv2")
+
 
 # 테스트 함수
 def test(model, device, test_loader):
@@ -92,6 +141,7 @@ def test(model, device, test_loader):
 
     test_loss /= len(test_loader.dataset)
     print(f'\nTest set: Average loss: {test_loss:.8f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n')
+
 
 # 학습 및 테스트 실행
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
