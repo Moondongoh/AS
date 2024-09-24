@@ -114,15 +114,15 @@ def train(model, device, train_loader, optimizer, epoch):
         
         if batch_idx % 100 == 0:
             print(f'Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}')
-            
-            if epoch == 10:
-            
-                # 100번째 배치마다 필터 가중치 시각화
-                print("Visualizing conv1 filter weights...")
-                visualize_filter_weights(model.conv1, "Conv1")
-            
-                print("Visualizing conv2 filter weights...")
-                visualize_filter_weights(model.conv2, "Conv2")
+    
+    if epoch ==10:
+        
+        # 100번째 배치마다 필터 가중치 시각화
+        print("Visualizing conv1 filter weights...")
+        visualize_filter_weights(model.conv1, "Conv1")
+
+        print("Visualizing conv2 filter weights...")
+        visualize_filter_weights(model.conv2, "Conv2")
 
 
 # 테스트 함수
