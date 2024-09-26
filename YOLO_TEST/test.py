@@ -1,9 +1,34 @@
-from ultralytics import YOLO
 import cv2
-model = YOLO("yolov8s.pt") # 원하는 크기 모델 입력(n ~ x)
+from ultralytics import YOLO
 
-result = model.predict("D:\Git_Hub\AS\YOLO_TEST/test.png", save=True, conf=0.5)
-plots = result[0].plot()
-cv2.imshow("plot", plots)
-cv2.waitKey(0)
+# Load the YOLOv8 model
+model = YOLO('yolov8n.pt')
+
+# Open the webcam (use 0 for the default camera)
+cap = cv2.VideoCapture(1)
+
+# Loop through the webcam frames
+while cap.isOpened():
+    # Read a frame from the webcam
+    success, frame = cap.read()
+
+    if success:
+        # Run YOLOv8 inference on the frame
+        results = model(frame)
+
+        # Visualize the results on the frame
+        annotated_frame = results[0].plot()
+
+        # Display the annotated frame
+        cv2.imshow("YOLOv8 Webcam Inference", annotated_frame)
+
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+    else:
+        # Break the loop if there's an issue reading the frame
+        break
+
+# Release the webcam and close the display window
+cap.release()
 cv2.destroyAllWindows()
