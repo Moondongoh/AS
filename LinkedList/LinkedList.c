@@ -4,7 +4,7 @@
 //1번 앞 노드 데이터 추가
 void addFirstNode(D_Node** head, long long data)
 {
-    D_Node* newNode = (D_Node*)malloc(sizeof(D_Node));  // 새로운 노드 동적 할당
+    D_Node* newNode = (D_Node*)malloc(sizeof(D_Node));                  // 새로운 노드 동적 할당
 
     newNode->data = data;
     newNode->next = *head;                                             // 현재 헤드를 새로운 노드의 다음으로 설정
