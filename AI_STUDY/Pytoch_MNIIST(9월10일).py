@@ -86,10 +86,24 @@ def visualize_filter_weights(conv_layer, layer_name):
     plt.colorbar(ax.imshow(filters[0, 0, :, :], cmap='coolwarm', interpolation='none'), ax=axes, orientation='vertical', fraction=0.05, pad=0.05)
     plt.show()
 
+# Feature map 시각화 함수
+def visualize_feature_maps(feature_maps, layer_name):
+    num_feature_maps = feature_maps.shape[1]  # 출력 채널 수
+    size = feature_maps.shape[2]  # feature map 크기 (height, width)
+    
+    fig, axes = plt.subplots(1, num_feature_maps, figsize=(num_feature_maps * 3, 3))
+    
+    for i in range(num_feature_maps):
+        ax = axes[i]
+        ax.imshow(feature_maps[0, i].cpu().numpy(), cmap='gray')  # 첫 번째 이미지를 기준으로 시각화
+        ax.set_title(f'{layer_name} - Feature {i}')
+        ax.axis('off')  # 축 표시 제거
+    
+    plt.show()
 
 # 타겟을 원-핫 인코딩으로 변환하는 함수
 def one_hot_encode(labels, num_classes):
-    return torch.eye(num_classes)[labels]
+    return torch.eye(num_classes, device=labels.device)[labels]
 
 # 모델, 손실 함수 및 옵티마이저 초기화
 model = CNNModel()
@@ -115,25 +129,38 @@ def train(model, device, train_loader, optimizer, epoch):
         if batch_idx % 100 == 0:
             print(f'Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}')
     
-    if epoch ==10:
+    #if epoch ==10:
         
         # 100번째 배치마다 필터 가중치 시각화
-        print("Visualizing conv1 filter weights...")
-        visualize_filter_weights(model.conv1, "Conv1")
+        #print("Visualizing conv1 filter weights...")
+        #visualize_filter_weights(model.conv1, "Conv1")
 
-        print("Visualizing conv2 filter weights...")
-        visualize_filter_weights(model.conv2, "Conv2")
+        #print("Visualizing conv2 filter weights...")
+        #visualize_filter_weights(model.conv2, "Conv2")
 
 
-# 테스트 함수
 def test(model, device, test_loader):
     model.eval()
     test_loss = 0
     correct = 0
     with torch.no_grad():
-        for data, target in test_loader:
+        for batch_idx, (data, target) in enumerate(test_loader):
             data, target = data.to(device), target.to(device)
-            output, _, _ = model(data)
+            output, conv1_output, conv2_output = model(data)
+            
+            # # conv1, conv2의 출력값을 출력
+            # print("Conv1 Output Shape:", conv1_output.shape)
+            # print(conv1_output)
+            # print("Conv2 Output Shape:", conv2_output.shape)
+            # print(conv2_output)
+
+            if batch_idx == 0 and epoch == 10:  # 첫 번째 배치에 대해서만 시각화
+                print("Visualizing Conv1 feature maps...")
+                visualize_feature_maps(conv1_output, "Conv1")
+                
+                print("Visualizing Conv2 feature maps...")
+                visualize_feature_maps(conv2_output, "Conv2")
+            
             # 타겟을 원-핫 인코딩으로 변환
             target_one_hot = one_hot_encode(target, 10).to(device)
             # MSE 손실 계산
@@ -145,10 +172,11 @@ def test(model, device, test_loader):
     print(f'\nTest set: Average loss: {test_loss:.8f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n')
 
 
+
 # 학습 및 테스트 실행
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
-for epoch in range(1, 11):  # 10 에폭 학습*
+for epoch in range(1,11):  # 10 에폭 학습*
     train(model, device, train_loader, optimizer, epoch)
     test(model, device, test_loader)
