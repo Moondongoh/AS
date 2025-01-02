@@ -65,7 +65,6 @@ image = cv2.imread(image_path)
 #TheNewGrandStarex_1298
 #G90_3845
 
-
 def detect_objects(image):
     results = model.predict(image, verbose=False)
     
