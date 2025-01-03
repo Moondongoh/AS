@@ -77,9 +77,30 @@
 1. winapi로 제작했던 메모장과 그림판을 바탕으로 MFC로 재제작.
 
                     6. AI study
-                    (24.07~ing)
+                    (24.07~24.09)
 1. IRIS DATA를 이용해 평균, 분산, 표준편차를 구할 수 있다.
 2. 대조군과 비교군을 나누어 서로 비교해 오차를 구할 수 있다.
 3. 위의 코드를 바탕으로 선형 회귀 방정식을 구할 수 있다.
 4. 역전파, 순전파, 활성화함수(쓰레시홀드, 시그모이드)에 대해서 공부하며
 입력, 은닉, 출력, 학습률을 직접 조정해 MNIST분류 시킬 수 있다.
+
+                    7. Car Detection(CCTV)
+                    (24.12~ing)
+1. Yolo(model = YOLO('yolov10n.pt'))를 이용해서 모델을 생성한 후
+자동차 데이터 셋을 이용해서 모델을 학습 시킨다.
+2. 학습 데이터 셋을 생성하는 과정에서 본 이미지를 Yolo를 이용해 객체만
+잘라낸 후 학습 데이터로 사용한다.
+* 단 데이터 셋 라벨을 생성을 할 때 0~1 사이 값으로 좌표 값을 계산해서 얻어 낸다.
+            # YOLO 라벨 형식으로 변환
+            center_x = ((x_min + x_max) / 2) / w
+            center_y = ((y_min + y_max) / 2) / h
+            width = (x_max - x_min) / w
+            height = (y_max - y_min) / h
+
+            # 0~1 범위를 보장
+            center_x = max(0, min(center_x, 1))
+            center_y = max(0, min(center_y, 1))
+            width = max(0, min(width, 1))
+            height = max(0, min(height, 1))
+3. 라벨링까지 끝낸 후 이미지와 라벨을 모델에 넣어서 학습을 시킨다.
+4. 현재 이미지와 영상(OpenCV) 모두 객체를 탐지하는데 성공한 상태.
