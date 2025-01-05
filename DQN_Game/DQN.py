@@ -20,7 +20,7 @@ model = DQN(
 )
 
 print("Starting training...")
-model.learn(total_timesteps=5000, log_interval=100)
+model.learn(total_timesteps=20000, log_interval=100)  #<<<<<<<<<<<<<<<<<Episode 반복을 위해서 total_timesteps 값을 늘려서 에피소드 반복 횟수를 증가
 print("Training complete.")
 
 # 모델 저장
