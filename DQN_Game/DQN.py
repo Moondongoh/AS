@@ -15,12 +15,12 @@ model = DQN(
     learning_rate=1e-3,
     buffer_size=5000,
     learning_starts=500,
-    batch_size=32,
+    batch_size=16,
     target_update_interval=500
 )
 
 print("Starting training...")
-model.learn(total_timesteps=20000, log_interval=100)  #<<<<<<<<<<<<<<<<<Episode 반복을 위해서 total_timesteps 값을 늘려서 에피소드 반복 횟수를 증가
+model.learn(total_timesteps=200000, log_interval=100)  #<<<<<<<<<<<<<<<<<Episode 반복을 위해서 total_timesteps 값을 늘려서 에피소드 반복 횟수를 증가
 print("Training complete.")
 
 # 모델 저장
