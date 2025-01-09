@@ -1,3 +1,4 @@
+import pygame
 import gym
 import torch
 import torch.nn as nn
@@ -84,6 +85,19 @@ for episode in range(num_episodes):
     for t in range(200):
         env.render()  # Render the environment at each step
         
+        # Check for ESC key press
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                env.close()
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    print("ESC key pressed, exiting...")
+                    env.close()
+                    pygame.quit()
+                    exit()
+
         action, exploration = select_action(state, epsilon)
         next_state, reward, done, _, _ = env.step(action)
 
