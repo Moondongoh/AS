@@ -27,7 +27,9 @@ def calculate_accuracy(model_path, test_path, class_names):
         # 기본값 설정 (예측이 없는 경우 대비)
         predicted_class = "No prediction"
         
-        if len(predictions) > 0:
+        if len(predictions) == 0:  # 예측이 없는 경우
+            No_prediction += 1
+        else:
             # 가장 높은 확률을 가진 클래스 ID
             top_prediction = int(predictions[0].item())
             predicted_class = class_names[top_prediction]
