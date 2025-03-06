@@ -13,7 +13,7 @@ void cur(short x, short y)
 
 int main()
 {
-    D_Node* head = NULL;                                                    // 연결 리스트의 헤드 포인터 초기화
+    D_Node* head = NULL;                                                    //연결 리스트의 헤드 포인터 초기화
     D_Node* selectedNode = NULL;                                            //선택할 노드 포인터 초기화
 
     COORD pos = { 0,0 };//커서 위치
