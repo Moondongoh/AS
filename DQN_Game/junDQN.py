@@ -106,6 +106,7 @@ for episode in range(num_episodes):
         with torch.no_grad():
             q_values = q_network(state_tensor)
         print(f"Episode {episode}, Step {t}")
+        
         print(f"State: {state}")
         print(f"Action: {action} {'(Exploration)' if exploration else '(Exploitation)'}")
         print(f"Q-values: {q_values.detach().numpy()}")
