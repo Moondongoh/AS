@@ -37,7 +37,7 @@ import cv2
 from ultralytics import YOLO
 
 # Load the YOLOv8 model
-model = YOLO('yolov8n.pt')
+model = YOLO('yolov8n.pt') # 모델 설정정
 
 # Load the image (test.png)
 image = cv2.imread('D:/Git_Hub/AS/YOLO_TEST/t.jpg')
