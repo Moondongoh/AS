@@ -8,12 +8,13 @@ from matplotlib.patches import Ellipse
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-class Gridnvironment:
+class GridEnvironment:
     def __init__(self):
-        self.grid_size = 10
+        self.grid_size = 9
         self.grid = np.zeros((self.grid_size, self.grid_size))
         self.start = (1, 1)  # 시작 지점
-        self.danger_ellipse = {'center': (5, 5), 'a': 2, 'b': 1}  # 위험 영역 (타원)
+        #self.danger_ellipse = {'center': (5, 5), 'a': 2, 'b': 1}  # 위험 영역 (타원)
+        self.danger_zone = {'top_left': (3, 3), 'size': 3}  # 2x2 정사각형
         self.max_steps = 200
         self.current_steps = 0
         self.direction = 0
@@ -33,12 +34,13 @@ class Gridnvironment:
         self.prev_dist = 0
         self.flag = False
         return self._get_state()
-
-    def _is_in_ellipse(self, position):
+    
+    def _is_in_square(self, position):
         x, y = position
-        h, k = self.danger_ellipse['center']
-        a, b = self.danger_ellipse['a'], self.danger_ellipse['b']
-        return ((x - h) / a) ** 2 + ((y - k) / b) ** 2 <= 1
+        x0, y0 = self.danger_zone['top_left']
+        size = self.danger_zone['size']
+        return x0 <= x < x0 + size and y0 <= y < y0 + size
+
 
     def _distance_to_boundary(self, position, angle):
         x, y = position
@@ -50,26 +52,29 @@ class Gridnvironment:
         distance_to_boundary = min(max(t_x, 0), max(t_y, 0))
         return distance_to_boundary
 
-    def _distance_to_ellipse(self, position, angle):
+    def _distance_to_square(self, position, angle):
         x, y = position
-        h, k = self.danger_ellipse['center']
-        a, b = self.danger_ellipse['a'], self.danger_ellipse['b']
+        x0, y0 = self.danger_zone['top_left']
+        size = self.danger_zone['size']
 
-        # 타원 방정식으로 가장 가까운 점의 거리를 근사적으로 계산
         dx, dy = np.cos(angle), np.sin(angle)
-        t = np.linspace(0, 10, 1000)  # 0부터 10까지 샘플링
-        points = np.array([x + t * dx, y + t * dy]).T
-        distances = ((points[:, 0] - h) / a) ** 2 + ((points[:, 1] - k) / b) ** 2
 
-        within_ellipse = np.where(distances <= 1)[0]
-        if within_ellipse.size > 0:
-            return t[within_ellipse[0]]
-        return float('inf')
+        t_vals = []
+        for edge_x in [x0, x0 + size]:
+            if dx != 0:
+                t_vals.append((edge_x - x) / dx)
 
+        for edge_y in [y0, y0 + size]:
+            if dy != 0:
+                t_vals.append((edge_y - y) / dy)
+
+        t_vals = [t for t in t_vals if t > 0]
+        return min(t_vals) if t_vals else float('inf')
+    
     def _distance_in_direction(self, angle):
         radians = np.radians(angle)
         dist_to_boundary = self._distance_to_boundary(self.position, radians)
-        dist_to_danger = self._distance_to_ellipse(self.position, radians)
+        dist_to_danger = self._distance_to_square(self.position, radians)
         return min(dist_to_boundary, dist_to_danger)
 
     def _get_state(self):
@@ -107,11 +112,11 @@ class Gridnvironment:
         dist_to_start = np.sqrt(dx**2 + dy**2)
 
         reward = 0.1
-
-        # 타원 영역에 들어갔을 때의 처리
-        if self._is_in_ellipse(self.position):
+        
+        if self._is_in_square(self.position):
             self.total_reward -= 50.0
             return self._get_state(), -50.0, True
+
 
         min_distance_to_danger = min([self._distance_in_direction(self.direction + angle) for angle in [-90, -45, 0, 45, 90]])
         if min_distance_to_danger < 0.01:
@@ -123,13 +128,13 @@ class Gridnvironment:
         if self.prev_dist > dist_to_start and not self.flag:
             reward -= 8
 
-        if self.prev_dist < dist_to_start and not self.flag: # 시작부터 거리가 아닌 이전 위치와의 거리차이로 해야할듯듯
+        if self.prev_dist < dist_to_start and not self.flag: # 시작부터 거리가 아닌 이전 위치와의 거리차이로 해야할듯
             reward += 0.5 * dist_to_start
 
         if self.prev_dist < dist_to_start and self.flag:
             reward -= 8
 
-        if self.prev_dist > dist_to_start and self.flag: # 시작부터 거리가 아닌 이전 위치와의 거리차이로 해야할듯듯
+        if self.prev_dist > dist_to_start and self.flag: # 시작부터 거리가 아닌 이전 위치와의 거리차이로 해야할듯
             reward += 0.5 * dist_to_start
 
         self.prev_dist = dist_to_start
@@ -182,7 +187,7 @@ def train_dqn(env):
     epsilon = 1.0
     epsilon_decay = 0.999
     epsilon_min = 0.01
-    episodes = 2000
+    episodes = 8000
     target_update = 10
 
     rewards_history = []
@@ -275,14 +280,14 @@ def visualize_episode_steps(env, model, episode_num, fig=None, ax=None):
         rewards.append(reward)
         states.append(next_state)
         state = next_state
-    
+
     for step in range(len(positions)):
         ax.clear()
-        # 위험 영역(타원) 표시
-        h, k = env.danger_ellipse['center']
-        a, b = env.danger_ellipse['a'], env.danger_ellipse['b']
-        ellipse = Ellipse(xy=(k, h), width=a, height=b, edgecolor='red', facecolor='red', alpha=0.3)
-        ax.add_patch(ellipse)
+        # 위험 영역(정사각형) 표시
+        x0, y0 = env.danger_zone['top_left']
+        size = env.danger_zone['size']
+        square = plt.Rectangle((y0, x0), size, size, edgecolor='red', facecolor='red', alpha=0.9)
+        ax.add_patch(square)
         
         # 고정된 축 설정
         ax.set_xlim(0, env.grid_size)
@@ -336,7 +341,7 @@ def train_dqn_with_visualization(env):
     target_update = 10
     
     # Visualization setup
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+    fig, ax1 = plt.subplots(1, 1, figsize=(8, 8))  # ax2 지움 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
     rewards_history = []
     steps_history = []
     plt.ion()
@@ -406,7 +411,7 @@ def train_dqn_with_visualization(env):
 
         # Update plots
         ax1.clear()
-        ax2.clear()
+        #ax2.clear()
 
         ax1.plot(rewards_history, label='Rewards', color='blue')
         ax1.set_title("Episode Rewards")
@@ -414,16 +419,16 @@ def train_dqn_with_visualization(env):
         ax1.set_ylabel("Total Reward")
         ax1.legend()
 
-        ax2.plot(steps_history, label='Steps', color='orange')
-        ax2.set_title("Steps Per Episode")
-        ax2.set_xlabel("Episodes")
-        ax2.set_ylabel("Steps")
-        ax2.legend()
+        # ax2.plot(steps_history, label='Steps', color='orange')
+        # ax2.set_title("Steps Per Episode")
+        # ax2.set_xlabel("Episodes")
+        # ax2.set_ylabel("Steps")
+        # ax2.legend()
 
         plt.draw()
         plt.pause(0.01)
 
-        if (episode + 1) % 10 == 0:
+        if (episode + 1) % 100 == 0:
             if not episode_terminated:  # Only visualize if episode wasn't terminated early
                 visualize_episode_steps(env, model, episode, fig, ax1)
             avg_reward = sum(rewards_history[-10:]) / 10
@@ -437,5 +442,5 @@ def train_dqn_with_visualization(env):
     return model, rewards_history
 
 # 학습 실행
-env = Gridnvironment()
+env = GridEnvironment()
 trained_model = train_dqn_with_visualization(env)
