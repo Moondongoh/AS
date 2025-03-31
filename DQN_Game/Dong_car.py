@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import random
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
@@ -13,7 +13,6 @@ class GridEnvironment:
         self.grid_size = 9
         self.grid = np.zeros((self.grid_size, self.grid_size))
         self.start = (1, 1)  # 시작 지점
-        #self.danger_ellipse = {'center': (5, 5), 'a': 2, 'b': 1}  # 위험 영역 (타원)
         self.danger_zone = {'top_left': (3, 3), 'size': 3}  # 2x2 정사각형
         self.max_steps = 200
         self.current_steps = 0
@@ -33,6 +32,7 @@ class GridEnvironment:
         self.total_reward = 0  # 리셋 시 누적 보상도 초기화
         self.prev_dist = 0
         self.flag = False
+        self.visited_goals = []  # 방문한 목표 지점 리스트 초기화
         return self._get_state()
     
     def _is_in_square(self, position):
@@ -40,7 +40,6 @@ class GridEnvironment:
         x0, y0 = self.danger_zone['top_left']
         size = self.danger_zone['size']
         return x0 <= x < x0 + size and y0 <= y < y0 + size
-
 
     def _distance_to_boundary(self, position, angle):
         x, y = position
@@ -96,61 +95,61 @@ class GridEnvironment:
         rotations = [-90, -45, 0, 45, 90]
         self.direction = (self.direction + rotations[action]) % 360
         radians = np.radians(self.direction)
-        dx, dy = 0.5 * np.cos(radians), 0.5 * np.sin(radians)
+        dx, dy = 1 * np.cos(radians), 1 * np.sin(radians) #0.5 -> 1
 
+        # 새로운 위치 업데이트
         new_x = np.clip(self.position[0] + dx, 0, self.grid_size - 1)
         new_y = np.clip(self.position[1] + dy, 0, self.grid_size - 1)
         self.position = (new_x, new_y)
         self.current_steps += 1
 
-        dx = self.position[0] - self.start[0]
-        dy = self.position[1] - self.start[1]
-        current_angle = np.arctan2(dy, dx)
-
+        # 거리 계산
         dx = self.position[0] - self.start[0]
         dy = self.position[1] - self.start[1]
         dist_to_start = np.sqrt(dx**2 + dy**2)
 
+        # 종료 조건 체크
+        if self._is_in_square(self.position):
+            return self._get_state(), -50.0, True  # 위험 지역 진입 시 종료
+
+        min_distance_to_danger = min(
+            [self._distance_in_direction(self.direction + angle) for angle in [-90, -45, 0, 45, 90]]
+        )
+        # if min_distance_to_danger < 0.01:
+        #     return self._get_state(), 0.0, True  # 너무 가까우면 종료
+
+        # 보상 계산
         reward = 0.1
         
-        if self._is_in_square(self.position):
-            self.total_reward -= 50.0
-            return self._get_state(), -50.0, True
+        # 목표 지점 추가 보상
+        goal_positions = [(1, 8), (8, 8), (8, 1)]
+        for goal in goal_positions:
+            if (round(self.position[0]), round(self.position[1])) == goal and goal not in self.visited_goals:
+                reward += 20.0
+                self.visited_goals.append(goal)
 
 
-        min_distance_to_danger = min([self._distance_in_direction(self.direction + angle) for angle in [-90, -45, 0, 45, 90]])
-        if min_distance_to_danger < 0.01:
-            return self._get_state(), 0.0, True
+        # 거리에 따른 보상 (이전 거리 대비)
+        if dist_to_start > self.prev_dist:
+            reward += 1 * dist_to_start #0.5 -> 1
+        else:
+            reward -= 5
 
-        if dist_to_start > 10.0 and not self.flag:
-            self.flag = True
-
-        if self.prev_dist > dist_to_start and not self.flag:
-            reward -= 8
-
-        if self.prev_dist < dist_to_start and not self.flag: # 시작부터 거리가 아닌 이전 위치와의 거리차이로 해야할듯
-            reward += 0.5 * dist_to_start
-
-        if self.prev_dist < dist_to_start and self.flag:
-            reward -= 8
-
-        if self.prev_dist > dist_to_start and self.flag: # 시작부터 거리가 아닌 이전 위치와의 거리차이로 해야할듯
-            reward += 0.5 * dist_to_start
-
-        self.prev_dist = dist_to_start
-
+        # 회전 보상 (일정 각도 이상 회전 시 추가 보상)
+        current_angle = np.arctan2(dy, dx)
         angle_diff = (current_angle - self.last_angle) % (2 * np.pi)
         if angle_diff > 0:
             reward += 0.2
-
         self.last_angle = current_angle
-        done = self.current_steps >= self.max_steps
 
-        # 누적 보상 업데이트 및 체크
+        self.prev_dist = dist_to_start
         self.total_reward += reward
+
+        # 누적 보상 기준 종료 조건
         if self.total_reward <= -50:
             return self._get_state(), reward, True
 
+        done = self.current_steps >= self.max_steps
         return self._get_state(), reward, done
 
 class DQN(nn.Module):
@@ -187,7 +186,7 @@ def train_dqn(env):
     epsilon = 1.0
     epsilon_decay = 0.999
     epsilon_min = 0.01
-    episodes = 8000
+    episodes = 2000
     target_update = 10
 
     rewards_history = []
@@ -411,24 +410,17 @@ def train_dqn_with_visualization(env):
 
         # Update plots
         ax1.clear()
-        #ax2.clear()
-
+        
         ax1.plot(rewards_history, label='Rewards', color='blue')
         ax1.set_title("Episode Rewards")
         ax1.set_xlabel("Episodes")
         ax1.set_ylabel("Total Reward")
         ax1.legend()
 
-        # ax2.plot(steps_history, label='Steps', color='orange')
-        # ax2.set_title("Steps Per Episode")
-        # ax2.set_xlabel("Episodes")
-        # ax2.set_ylabel("Steps")
-        # ax2.legend()
-
         plt.draw()
         plt.pause(0.01)
 
-        if (episode + 1) % 100 == 0:
+        if (episode + 1) % 10 == 0:
             if not episode_terminated:  # Only visualize if episode wasn't terminated early
                 visualize_episode_steps(env, model, episode, fig, ax1)
             avg_reward = sum(rewards_history[-10:]) / 10
