@@ -8,39 +8,57 @@ import matplotlib.pyplot as plt
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
+
+### 환경 설정 class
 class GridEnvironment:
+    ### 환경설정
     def __init__(self):
-        self.grid_size = 9
-        self.grid = np.zeros((self.grid_size, self.grid_size))
-        self.start = (1, 1)  # 시작 지점
-        self.danger_zone = {'top_left': (3, 3), 'size': 3}  # 2x2 정사각형
-        self.max_steps = 200
-        self.current_steps = 0
-        self.direction = 0
-        self.position = self.start
-        self.last_angle = 0
-        self.total_reward = 0  # 누적 보상 추적을 위해 추가
-        self.flag = False
-        self.prev_dist = 0
+        self.grid_size = 9                                      # 격자 크기
+        self.grid = np.zeros((self.grid_size, self.grid_size))  # 9x9 크기의 0으로 채워진 배열 생성
+        self.start = (1, 1)                                     # 시작 지점
+        self.danger_zone = {'top_left': (3, 3), 'size': 3}      # 3,3에서 시작하는 3x3 정사각형
+        self.max_steps = 200                                    # 최대 이동 횟수(같은 방향으로 너무 많이 진행할 경우 방지지)
+        self.current_steps = 0                                  # 현재 이동 횟수 
+        self.direction = 0                                      # 초기 방향 (0도는 오른쪽, 90도는 위쪽)    
+        self.position = self.start                              # 현재 위치   
+        self.last_angle = 0                                     # 마지막 각도 (이전 이동 방향)
+        self.total_reward = 0                                   # 누적 보상 추적을 위해 추가
+        self.flag = False                                       # 위험 지역 진입 여부 플래그    
+        self.prev_dist = 0                                      # 이전 위치와의 거리
+        self.visited_goals = []                                 # 방문한 목표 지점 리스트 초기화
+        self.visited_positions = {}                             # 중복 방문 체크용 딕셔너리
+
+        # prev_dx, prev_dy 초기화
+        # self.prev_dx = 0  
+        # self.prev_dy = 0 
+
+        ### 환경 설정 후 초기화 호출
         self.reset()
 
     def reset(self):
-        self.position = self.start
-        self.direction = 0
-        self.current_steps = 0
-        self.last_angle = np.arctan2(0, 0)
-        self.total_reward = 0  # 리셋 시 누적 보상도 초기화
-        self.prev_dist = 0
-        self.flag = False
-        self.visited_goals = []  # 방문한 목표 지점 리스트 초기화
-        return self._get_state()
+        self.position = self.start              # 시작 위치로 초기화
+        self.direction = 0                      # 방향 초기화
+        self.current_steps = 0                  # 이동 횟수 초기화
+        self.last_angle = np.arctan2(0, 0)      # 마지막 각도 초기화
+        self.total_reward = 0                   # 리셋 시 누적 보상도 초기화
+        self.prev_dist = 0                      # 이전 위치와의 거리 초기화                                                    
+        self.flag = False                       # 위험 지역 진입 여부 플래그 초기화
+        self.visited_goals = []                 # 방문한 목표 지점 리스트 초기화
+        return self._get_state()                # 초기 상태 반환
     
+    ### _is_in_square() (위치가 위험 지역 내에 있는지 확인)
+    ### 현재 위치가 위험 지역 내에 있는지 확인하는 함수
+    ### (3,3)을 시작으로 3x3 크기의 정사각형 내에 있으면 True 반환
     def _is_in_square(self, position):
         x, y = position
         x0, y0 = self.danger_zone['top_left']
         size = self.danger_zone['size']
         return x0 <= x < x0 + size and y0 <= y < y0 + size
-
+    
+    ### _distance_to_boundary() (경계까지의 거리 계산)
+    ### 현재 방향(angle)에서 가장자리까지의 거리 계산
+    ### dx, dy = np.cos(angle), np.sin(angle)을 이용해 이동 방향 결정
+    ### x축과 y축 각각에 대해 벽까지의 거리 계산 후 최솟값을 반환
     def _distance_to_boundary(self, position, angle):
         x, y = position
         dx, dy = np.cos(angle), np.sin(angle)
@@ -50,7 +68,10 @@ class GridEnvironment:
 
         distance_to_boundary = min(max(t_x, 0), max(t_y, 0))
         return distance_to_boundary
-
+    
+    ### _distance_to_square() (위험 지역까지의 거리 계산)
+    ### 현재 방향에서 위험 지역(정사각형)까지의 거리 계산
+    ### 에이전트가 바라보는 방향을 기준으로 직선 이동했을 때 정사각형의 어느 변과 만나는지 계산 후 최소값을 반환
     def _distance_to_square(self, position, angle):
         x, y = position
         x0, y0 = self.danger_zone['top_left']
@@ -70,12 +91,14 @@ class GridEnvironment:
         t_vals = [t for t in t_vals if t > 0]
         return min(t_vals) if t_vals else float('inf')
     
+    ### _distance_in_direction() (특정 방향에서 경계 또는 위험 지역까지의 거리)
     def _distance_in_direction(self, angle):
         radians = np.radians(angle)
         dist_to_boundary = self._distance_to_boundary(self.position, radians)
         dist_to_danger = self._distance_to_square(self.position, radians)
         return min(dist_to_boundary, dist_to_danger)
 
+    ### _get_state() (현재 상태 반환)
     def _get_state(self):
         directions = [-90, -45, 0, 45, 90]
         state_info = [
@@ -95,7 +118,7 @@ class GridEnvironment:
         rotations = [-90, -45, 0, 45, 90]
         self.direction = (self.direction + rotations[action]) % 360
         radians = np.radians(self.direction)
-        dx, dy = 1 * np.cos(radians), 1 * np.sin(radians) #0.5 -> 1
+        dx, dy = np.cos(radians), np.sin(radians)  # 이동 벡터
 
         # 새로운 위치 업데이트
         new_x = np.clip(self.position[0] + dx, 0, self.grid_size - 1)
@@ -103,24 +126,21 @@ class GridEnvironment:
         self.position = (new_x, new_y)
         self.current_steps += 1
 
-        # 거리 계산
-        dx = self.position[0] - self.start[0]
-        dy = self.position[1] - self.start[1]
-        dist_to_start = np.sqrt(dx**2 + dy**2)
-
         # 종료 조건 체크
         if self._is_in_square(self.position):
             return self._get_state(), -50.0, True  # 위험 지역 진입 시 종료
+    
+        if self.position[0] in [0, self.grid_size - 1] or self.position[1] in [0, self.grid_size - 1]:
+            return self._get_state(), -50.0, True  # 가장자리 충돌 시 종료
 
-        min_distance_to_danger = min(
-            [self._distance_in_direction(self.direction + angle) for angle in [-90, -45, 0, 45, 90]]
-        )
-        # if min_distance_to_danger < 0.01:
-        #     return self._get_state(), 0.0, True  # 너무 가까우면 종료
+        # 거리 계산
+        dx_start = self.position[0] - self.start[0]
+        dy_start = self.position[1] - self.start[1]
+        dist_to_start = np.sqrt(dx_start**2 + dy_start**2)
 
         # 보상 계산
         reward = 0.1
-        
+    
         # 목표 지점 추가 보상
         goal_positions = [(1, 8), (8, 8), (8, 1)]
         for goal in goal_positions:
@@ -128,31 +148,49 @@ class GridEnvironment:
                 reward += 20.0
                 self.visited_goals.append(goal)
 
-
-        # 거리에 따른 보상 (이전 거리 대비)
+        # 거리에 따른 보상
         if dist_to_start > self.prev_dist:
-            reward += 1 * dist_to_start #0.5 -> 1
+            reward += 1 * dist_to_start
         else:
             reward -= 5
 
-        # 회전 보상 (일정 각도 이상 회전 시 추가 보상)
-        current_angle = np.arctan2(dy, dx)
-        angle_diff = (current_angle - self.last_angle) % (2 * np.pi)
-        if angle_diff > 0:
-            reward += 0.2
-        self.last_angle = current_angle
+        # 회전 보상 (이전 이동 방향 기준)
+        if self.prev_dx is not None and self.prev_dy is not None:
+            prev_angle = np.arctan2(self.prev_dy, self.prev_dx)
+            current_angle = np.arctan2(dy, dx)
+            angle_diff = abs(current_angle - prev_angle) % (2 * np.pi)
+            if angle_diff > 0:
+                reward += 0.2
 
-        self.prev_dist = dist_to_start
-        self.total_reward += reward
+        # # **중복 이동 패널티 추가**
+        # rounded_pos = (round(self.position[0]), round(self.position[1]))
+        # if rounded_pos in self.visited_positions:
+        #     self.visited_positions[rounded_pos] += 1
+        #     if self.visited_positions[rounded_pos] >= 3:  # 같은 위치 3번 이상 방문하면 패널티
+        #         reward -= 10
+        # else:
+        #     self.visited_positions[rounded_pos] = 1
+         
+        # # 일정 횟수 이상 같은 위치를 방문하면 강제 종료
+        # if self.visited_positions[rounded_pos] >= 5:
+        #     return self._get_state(), reward - 20, True  # -20 추가 패널티 후 종료
 
-        # 누적 보상 기준 종료 조건
+        # # 이전 이동 방향 저장
+        # self.prev_dx = dx
+        # self.prev_dy = dy
+        # self.prev_dist = dist_to_start
+        # self.total_reward += reward
+
+        # 보상이 -50 이하일 경우 종료
         if self.total_reward <= -50:
             return self._get_state(), reward, True
 
+        # 최대 스텝 초과 시 종료
         done = self.current_steps >= self.max_steps
         return self._get_state(), reward, done
 
 class DQN(nn.Module):
+
     def __init__(self, state_dim, action_dim):
         super(DQN, self).__init__()
         self.fc = nn.Sequential(
@@ -250,6 +288,8 @@ def train_dqn(env):
 
     return model, rewards_history
 
+### 에이전트가 특정 에피소드에서 수행한 경로를 시각적으로 보임.
+### 에이전트의 이동 경로, 현재 위치, 위험 지역 등을 시각화
 def visualize_episode_steps(env, model, episode_num, fig=None, ax=None):
     if fig is None or ax is None:
         fig, ax = plt.subplots(figsize=(8, 8))
@@ -318,7 +358,8 @@ def visualize_episode_steps(env, model, episode_num, fig=None, ax=None):
         plt.draw()
         plt.pause(0.2)
 
-def train_dqn_with_visualization(env):
+### DQN 알고리즘을 사용하여 에이전트를 학습시키고, 학습 과정에서 보상과 스텝 수를 시각화
+def train_dqn_with_visualization(env):                              
     state_dim = 8
     action_dim = 5  
     
@@ -338,8 +379,7 @@ def train_dqn_with_visualization(env):
     epsilon_min = 0.01
     episodes = 2000
     target_update = 10
-    
-    # Visualization setup
+
     fig, ax1 = plt.subplots(1, 1, figsize=(8, 8))  # ax2 지움 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
     rewards_history = []
     steps_history = []
@@ -352,8 +392,9 @@ def train_dqn_with_visualization(env):
         step_count = 0
         episode_terminated = False
         
-        # Run one episode
         while not done and not episode_terminated:
+            ### epsilon 확률로 랜덤 행동을 수행 (탐험) >> 무작위로 움직인다.
+            ### 그 외에는 현재 신경망이 예측한 Q-value 중 가장 높은 행동 선택 (활용)
             if random.random() < epsilon:
                 action = random.randint(0, action_dim - 1)
             else:
