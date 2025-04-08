@@ -4,44 +4,55 @@ import torch.nn as nn
 import torch.optim as optim
 import random
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
+
+### 환경 설정 class
 class GridEnvironment:
+    ### 환경설정
     def __init__(self):
-        self.grid_size = 9
-        self.grid = np.zeros((self.grid_size, self.grid_size))
-        self.start = (1, 1)  # 시작 지점
-        self.danger_zone = {'top_left': (3, 3), 'size': 2}  # 2x2 정사각형
-        self.max_steps = 200
-        self.current_steps = 0
-        self.direction = 0
-        self.position = self.start
-        self.last_angle = 0
-        self.total_reward = 0  # 누적 보상 추적을 위해 추가
-        self.flag = False
-        self.prev_dist = 0
+        self.grid_size = 9                                      # 격자 크기
+        self.grid = np.zeros((self.grid_size, self.grid_size))  # 9x9 크기의 0으로 채워진 배열 생성
+        self.start = (1, 1)                                     # 시작 지점
+        #self.danger_zone = {'top_left': (0, 4), 'size': 5}      # 3,3에서 시작하는 3x3 정사각형
+        self.danger_zone = {'top_left': (3, 3), 'size': 3}      # 3,3에서 시작하는 3x3 정사각형
+        self.max_steps = 200                                    # 최대 이동 횟수(같은 방향으로 너무 많이 진행할 경우 방지지)
+        self.current_steps = 0                                  # 현재 이동 횟수 
+        self.direction = 0                                      # 초기 방향 (0도는 오른쪽, 90도는 위쪽)    
+        self.position = self.start                              # 현재 위치   
+        self.last_angle = 0                                     # 마지막 각도 (이전 이동 방향)
+        self.total_reward = 0                                   # 누적 보상 추적을 위해 추가
+        self.flag = False                                       # 위험 지역 진입 여부 플래그    
+        self.prev_dist = 0                                      # 이전 위치와의 거리
+        self.visited_goals = []                                 # 방문한 목표 지점 리스트 초기화
+        self.visited_positions = {}                             # 중복 방문 체크용 딕셔너리
+        self.direction_score = 0  # 방향 점수 초기화
+        self.goal = (7, 7)  # 목표 지점
+
+
+
         self.reset()
 
     def reset(self):
-        self.position = self.start
-        self.direction = 0
-        self.current_steps = 0
-        self.last_angle = np.arctan2(0, 0)
-        self.total_reward = 0  # 리셋 시 누적 보상도 초기화
-        self.prev_dist = 0
-        self.flag = False
-        return self._get_state()
-    
+        self.direction_score = 0  # 방향 점수 초기화
+        self.position = self.start              # 시작 위치로 초기화
+        self.direction = 0                      # 방향 초기화
+        self.current_steps = 0                  # 이동 횟수 초기화
+        self.last_angle = np.arctan2(0, 0)      # 마지막 각도 초기화
+        self.total_reward = 0                   # 리셋 시 누적 보상도 초기화
+        self.prev_dist = 0                      # 이전 위치와의 거리 초기화                                                    
+        self.flag = False                       # 위험 지역 진입 여부 플래그 초기화
+        self.visited_goals = []                 # 방문한 목표 지점 리스트 초기화
+        return self._get_state()                # 초기 상태 반환
+
     def _is_in_square(self, position):
         x, y = position
         x0, y0 = self.danger_zone['top_left']
         size = self.danger_zone['size']
         return x0 <= x < x0 + size and y0 <= y < y0 + size
-
-
+    
     def _distance_to_boundary(self, position, angle):
         x, y = position
         dx, dy = np.cos(angle), np.sin(angle)
@@ -51,7 +62,7 @@ class GridEnvironment:
 
         distance_to_boundary = min(max(t_x, 0), max(t_y, 0))
         return distance_to_boundary
-
+    
     def _distance_to_square(self, position, angle):
         x, y = position
         x0, y0 = self.danger_zone['top_left']
@@ -70,7 +81,7 @@ class GridEnvironment:
 
         t_vals = [t for t in t_vals if t > 0]
         return min(t_vals) if t_vals else float('inf')
-    
+
     def _distance_in_direction(self, angle):
         radians = np.radians(angle)
         dist_to_boundary = self._distance_to_boundary(self.position, radians)
@@ -92,71 +103,167 @@ class GridEnvironment:
 
         return np.array(state_info + [dist_to_start, current_angle, step_info])
 
-    def step(self, action):
-        rotations = [-90, -45, 0, 45, 90]
-        self.direction = (self.direction + rotations[action]) % 360
-        radians = np.radians(self.direction)
-        dx, dy = 0.5 * np.cos(radians), 0.5 * np.sin(radians)
+    # def step(self, action):
+    #     rotations = [-45, 0, 45]
+    #     angle_change = rotations[action]
 
-        new_x = np.clip(self.position[0] + dx, 0, self.grid_size - 1)
-        new_y = np.clip(self.position[1] + dy, 0, self.grid_size - 1)
+    #     # 방향 변경
+    #     self.direction = (self.direction + angle_change) % 360
+    #     radians = np.radians(self.direction)
+    #     dx, dy = np.cos(radians), np.sin(radians)
+
+    #     # 이동
+    #     new_x = np.clip(self.position[0] + dx, 0, self.grid_size - 1)
+    #     new_y = np.clip(self.position[1] + dy, 0, self.grid_size - 1)
+    #     self.position = (new_x, new_y)
+    #     self.current_steps += 1
+
+    #     # 초기 리워드
+    #     reward = 0.5
+
+    #     # 방향 점수 업데이트
+    #     # 방향 점수 업데이트 (직진은 영향 없음)
+    #     if angle_change != 0:
+    #         self.direction_score += int(np.sign(angle_change))
+
+
+        
+    #     #print(f"[DEBUG] Step {self.current_steps}, Action: {action}, Angle Change: {angle_change}, "
+    #     #    f"New Direction: {self.direction}, DirScore: {self.direction_score}, Pos: {self.position}")
+
+    #     # 목표 도달 조건 추가 (약간의 부동소수 오차 고려)
+    #     goal_reached = np.linalg.norm(np.array(self.position) - np.array(self.goal)) < 0.5
+    #     if goal_reached:
+    #         reward += 50  # 큰 보상
+    #         self.total_reward += reward
+    #         return self._get_state(), reward, True
+
+    #     # 방향 점수에 따른 종료
+    #     if abs(self.direction_score) >= 2:
+    #         self.total_reward += reward
+    #         return self._get_state(), reward, True
+
+    #     # 위험 구역 도달 → 종료
+    #     if self._is_in_square(self.position):
+    #         self.total_reward += reward
+    #         return self._get_state(), reward, True
+
+    #     # 경계 도달 → 종료
+    #     if self.position[0] in [0, self.grid_size - 1] or self.position[1] in [0, self.grid_size - 1]:
+    #         self.total_reward += reward
+    #         return self._get_state(), reward, True
+
+    #     # 시작점과의 거리 계산
+    #     dx_start = self.position[0] - self.start[0]
+    #     dy_start = self.position[1] - self.start[1]
+    #     dist_to_start = np.sqrt(dx_start ** 2 + dy_start ** 2)
+
+    #     # 거리 기반 보상
+    #     if dist_to_start > self.prev_dist:
+    #         reward += dist_to_start
+    #     else:
+    #         reward -= 5
+
+    #     self.prev_dist = dist_to_start
+    #     self.total_reward += reward
+
+    #     # 보상 너무 낮으면 종료
+    #     if self.total_reward <= -50:
+    #         return self._get_state(), reward, True
+
+    #     # 최대 스텝 도달 여부
+    #     done = self.current_steps >= self.max_steps
+    #     return self._get_state(), reward, done
+    
+    def step(self, action):
+        rotations = [-45, 0, 45]
+        angle_change = rotations[action]
+
+        # 방향 갱신
+        self.direction = (self.direction + angle_change) % 360
+        if self.direction == -45:
+            self.direction = 315
+
+        # 이동 방향 맵핑 (정수 격자 기반으로)
+        move_map = {
+            0:   (0, 1),    # 오른쪽
+            45:  (-1, 1),   # 오른쪽 위
+            315: (1, 1),    # 오른쪽 아래
+        }
+        
+        # 이동 전 위치 저장
+        prev_position = self.position
+
+        dx, dy = move_map.get(self.direction, (0, 0))  # 안전 처리
+        new_x = int(np.clip(self.position[0] + dx, 0, self.grid_size - 1))
+        new_y = int(np.clip(self.position[1] + dy, 0, self.grid_size - 1))
         self.position = (new_x, new_y)
         self.current_steps += 1
-
-        dx = self.position[0] - self.start[0]
-        dy = self.position[1] - self.start[1]
-        current_angle = np.arctan2(dy, dx)
-
-        dx = self.position[0] - self.start[0]
-        dy = self.position[1] - self.start[1]
-        dist_to_start = np.sqrt(dx**2 + dy**2)
-
-        reward = 0.1
         
+        # ✅ 제자리면 penalty 또는 종료
+        if self.position == prev_position:
+            reward = -10  # 강한 패널티
+            self.total_reward += reward
+            return self._get_state(), reward, True  # 즉시 종료 (선택)
+
+        # 기본 보상
+        reward = 1
+
+        # 방향 점수 업데이트
+        if angle_change == 0:
+            self.direction_score = 0  # ← ❗ 직진도 점수 누적 중
+        else:
+            self.direction_score += int(np.sign(angle_change))
+            reward += 1  # ✅ 방향 전환 시 소량 보상
+
+        # 목표 도달 확인
+        if np.linalg.norm(np.array(self.position) - np.array(self.goal)) < 0.5:
+            reward += 10
+            self.total_reward += reward
+            return self._get_state(), reward, True
+
+        # 방향 제한 조건
+        if abs(self.direction_score) >= 3:
+            self.total_reward += reward
+            return self._get_state(), reward, True
+
+        # 위험지역 도달
         if self._is_in_square(self.position):
-            self.total_reward -= 50.0
-            return self._get_state(), -50.0, True
+            self.total_reward += reward
+            return self._get_state(), reward, True
 
+        # 벽(경계) 도달
+        if self.position[0] in [0, self.grid_size - 1] or self.position[1] in [0, self.grid_size - 1]:
+            self.total_reward += reward
+            return self._get_state(), reward, True
 
-        min_distance_to_danger = min([self._distance_in_direction(self.direction + angle) for angle in [-90, -45, 0, 45, 90]])
-        if min_distance_to_danger < 0.01:
-            return self._get_state(), 0.0, True
+        # 시작점과의 거리 기반 보상
+        dx_start = self.position[0] - self.start[0]
+        dy_start = self.position[1] - self.start[1]
+        dist_to_start = np.sqrt(dx_start ** 2 + dy_start ** 2)
 
-        if dist_to_start > 10.0 and not self.flag:
-            self.flag = True
-
-        if self.prev_dist > dist_to_start and not self.flag:
-            reward -= 8
-
-        if self.prev_dist < dist_to_start and not self.flag: # 시작부터 거리가 아닌 이전 위치와의 거리차이로 해야할듯
-            reward += 0.5 * dist_to_start
-
-        if self.prev_dist < dist_to_start and self.flag:
-            reward -= 8
-
-        if self.prev_dist > dist_to_start and self.flag: # 시작부터 거리가 아닌 이전 위치와의 거리차이로 해야할듯
-            reward += 0.5 * dist_to_start
+        if dist_to_start > self.prev_dist:
+            reward += dist_to_start
+        else:
+            reward -= 5
 
         self.prev_dist = dist_to_start
-
-        angle_diff = (current_angle - self.last_angle) % (2 * np.pi)
-        if angle_diff > 0:
-            reward += 0.2
-
-        self.last_angle = current_angle
-        done = self.current_steps >= self.max_steps
-
-        # 누적 보상 업데이트 및 체크
         self.total_reward += reward
+
+        # 누적 보상이 너무 낮으면 종료
         if self.total_reward <= -50:
             return self._get_state(), reward, True
 
+        # 최대 스텝 초과
+        done = self.current_steps >= self.max_steps
         return self._get_state(), reward, done
 
+
 class DQN(nn.Module):
-    def __init__(self, state_dim, action_dim):
+
+    def __init__(self, state_dim, action_dim=3):
         super(DQN, self).__init__()
-        self.fc = nn.Sequential(
+        self.fc = nn.Sequential( 
             nn.Linear(state_dim, 256),
             nn.ReLU(),
             nn.Linear(256, 256),
@@ -170,8 +277,8 @@ class DQN(nn.Module):
         return self.fc(x)
 
 def train_dqn(env):
-    state_dim = 8  # 5개 방향 + 시작점 거리 + 각도 + 스텝
-    action_dim = 5
+    state_dim = 8
+    action_dim = 3
     
     model = DQN(state_dim, action_dim).to(device)
     target_model = DQN(state_dim, action_dim).to(device)
@@ -187,7 +294,7 @@ def train_dqn(env):
     epsilon = 1.0
     epsilon_decay = 0.999
     epsilon_min = 0.01
-    episodes = 2000
+    episodes = 8000
     target_update = 10
 
     rewards_history = []
@@ -261,10 +368,9 @@ def visualize_episode_steps(env, model, episode_num, fig=None, ax=None):
     states = [state]
     done = False
 
-    # 축 고정
     ax.set_xlim(0, env.grid_size)
     ax.set_ylim(0, env.grid_size)
-    ax.invert_yaxis()  # Y축을 위에서 아래로 표시
+    ax.invert_yaxis() 
     ax.set_xticks(range(env.grid_size))
     ax.set_yticks(range(env.grid_size))
     ax.grid(True)
@@ -283,13 +389,11 @@ def visualize_episode_steps(env, model, episode_num, fig=None, ax=None):
 
     for step in range(len(positions)):
         ax.clear()
-        # 위험 영역(정사각형) 표시
         x0, y0 = env.danger_zone['top_left']
         size = env.danger_zone['size']
         square = plt.Rectangle((y0, x0), size, size, edgecolor='red', facecolor='red', alpha=0.9)
         ax.add_patch(square)
         
-        # 고정된 축 설정
         ax.set_xlim(0, env.grid_size)
         ax.set_ylim(0, env.grid_size)
         ax.invert_yaxis()
@@ -297,7 +401,6 @@ def visualize_episode_steps(env, model, episode_num, fig=None, ax=None):
         ax.set_yticks(range(env.grid_size))
         ax.grid(True)
 
-        # 경로 그리기
         current_positions = positions[:step+1]
         if current_positions:
             path_coords = np.array(current_positions)
@@ -305,12 +408,16 @@ def visualize_episode_steps(env, model, episode_num, fig=None, ax=None):
             for idx, (pos_x, pos_y) in enumerate(current_positions[:-1]):
                 ax.plot(pos_y, pos_x, 'bo', alpha=0.3, markersize=8)
 
-        # 시작점과 현재 위치
         ax.plot(env.start[1], env.start[0], 'go', markersize=15, label='Start')
+        ax.plot(env.goal[1], env.goal[0], 'yx', markersize=15, label='Goal')
+
         current_x, current_y = positions[step]
         ax.plot(current_y, current_x, 'r*', markersize=15, label='Current')
-
-        # 누적 보상
+        
+        # ✅ 목표 도달 시 일시정지
+        if np.linalg.norm(np.array(positions[step]) - np.array(env.goal)) < 0.5:
+            input(f"✅ Goal reached at step {step}! Press Enter to continue...")
+    
         cumulative_reward = sum(rewards[:step]) if step > 0 else 0
         ax.set_title(f'Episode {episode_num+1}, Step {step}/{len(positions)-1}\n'
                      f'Position: {positions[step]}, Reward: {cumulative_reward:.1f}\n ' f'state: {states[step]}')
@@ -319,9 +426,9 @@ def visualize_episode_steps(env, model, episode_num, fig=None, ax=None):
         plt.draw()
         plt.pause(0.2)
 
-def train_dqn_with_visualization(env):
+def train_dqn_with_visualization(env):                              
     state_dim = 8
-    action_dim = 5  
+    action_dim = 3  
     
     model = DQN(state_dim, action_dim).to(device)
     target_model = DQN(state_dim, action_dim).to(device)
@@ -337,11 +444,10 @@ def train_dqn_with_visualization(env):
     epsilon = 1.0
     epsilon_decay = 0.999
     epsilon_min = 0.01
-    episodes = 2000
+    episodes = 8000
     target_update = 10
-    
-    # Visualization setup
-    fig, ax1 = plt.subplots(1, 1, figsize=(8, 8))  # ax2 지움 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+
+    fig, ax1 = plt.subplots(1, 1, figsize=(8, 8))
     rewards_history = []
     steps_history = []
     plt.ion()
@@ -353,7 +459,6 @@ def train_dqn_with_visualization(env):
         step_count = 0
         episode_terminated = False
         
-        # Run one episode
         while not done and not episode_terminated:
             if random.random() < epsilon:
                 action = random.randint(0, action_dim - 1)
@@ -422,7 +527,7 @@ def train_dqn_with_visualization(env):
         plt.pause(0.01)
 
         if (episode + 1) % 10 == 0:
-            if not episode_terminated:  # Only visualize if episode wasn't terminated early
+            if not episode_terminated:
                 visualize_episode_steps(env, model, episode, fig, ax1)
             avg_reward = sum(rewards_history[-10:]) / 10
             print(f"Episode {episode + 1}: Average Reward: {avg_reward:.2f}, Epsilon: {epsilon:.2f}")
@@ -434,6 +539,5 @@ def train_dqn_with_visualization(env):
 
     return model, rewards_history
 
-# 학습 실행
 env = GridEnvironment()
 trained_model = train_dqn_with_visualization(env)
