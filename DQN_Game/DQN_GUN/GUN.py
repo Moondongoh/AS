@@ -1,20 +1,21 @@
 import numpy as np
+import random
 import torch
 import torch.nn as nn
+import torch.optim as optim
+from collections import deque
 import gymnasium as gym
 from gymnasium import spaces
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 
 
 class ShootingGameEnv(gym.Env):
     def __init__(self):
         super(ShootingGameEnv, self).__init__()
-        self.map_width = 8  #
+        self.map_width = 8
         self.map_height = 20
         self.max_steps = 200
 
-        self.action_space = spaces.Discrete(4)
+        self.action_space = spaces.Discrete(4)  # 정지, 좌, 우, 발사
         self.observation_space = spaces.Box(low=0, high=20, shape=(3,), dtype=np.int32)
 
         self.gun_x = 0
@@ -23,13 +24,11 @@ class ShootingGameEnv(gym.Env):
 
         self.step_count = 0
         self.done = False
-        self.fig = None
-        self.ax = None
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.gun_x = self.map_width // 2
-        self.target_x = np.random.randint(0, self.map_width)
+        self.target_x = random.randint(0, self.map_width - 1)
         self.bullet_pos = None
         self.step_count = 0
         self.done = False
@@ -66,7 +65,7 @@ class ShootingGameEnv(gym.Env):
                 reward = -5
 
         if self.step_count % 5 == 0:
-            self.target_x += np.random.choice([-1, 0, 1])
+            self.target_x += random.choice([-1, 0, 1])
             self.target_x = np.clip(self.target_x, 0, self.map_width - 1)
 
         self.step_count += 1
@@ -75,40 +74,13 @@ class ShootingGameEnv(gym.Env):
 
         return self._get_obs(), reward, self.done, False, {}
 
-    def render(self, mode="human"):
-        if self.fig is None or self.ax is None:
-            self.fig, self.ax = plt.subplots(figsize=(4, 10))
-            plt.ion()
-
-        self.ax.clear()
-        self.ax.set_xlim(0, self.map_width)
-        self.ax.set_ylim(0, self.map_height)
-        self.ax.set_aspect("equal")
-        self.ax.set_facecolor("black")
-
-        # Target
-        self.ax.add_patch(patches.Rectangle((self.target_x, 0), 1, 1, color="red"))
-        # Gun
-        self.ax.add_patch(
-            patches.Rectangle((self.gun_x, self.map_height - 1), 1, 1, color="blue")
-        )
-        # Bullet
-        if self.bullet_pos:
-            x, y = self.bullet_pos
-            if 0 <= y < self.map_height:
-                self.ax.add_patch(
-                    patches.Circle((x + 0.5, y + 0.5), 0.2, color="white")
-                )
-
-        self.ax.set_xticks([])
-        self.ax.set_yticks([])
-        plt.pause(0.05)
-        self.fig.canvas.draw()
+    def close(self):
+        pass
 
 
 class DQN(nn.Module):
     def __init__(self, input_dim=3, output_dim=4):
-        super().__init__()
+        super(DQN, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, 64),
             nn.ReLU(),
@@ -123,36 +95,82 @@ class DQN(nn.Module):
 
 class DQNAgent:
     def __init__(self):
+        self.state_dim = 3
+        self.action_dim = 4
+        self.gamma = 0.99
+        self.lr = 1e-3
+        self.batch_size = 64
+        self.epsilon_start = 1.0
+        self.epsilon_end = 0.05
+        self.epsilon_decay = 5000
+
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.policy_net = DQN(3, 4).to(self.device)
-        self.policy_net.eval()
+        self.policy_net = DQN(self.state_dim, self.action_dim).to(self.device)
+        self.target_net = DQN(self.state_dim, self.action_dim).to(self.device)
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.target_net.eval()
+
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.lr)
+        self.memory = deque(maxlen=10000)
+        self.steps_done = 0
 
     def select_action(self, state):
-        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        eps = self.epsilon_end + (self.epsilon_start - self.epsilon_end) * np.exp(
+            -1.0 * self.steps_done / self.epsilon_decay
+        )
+        self.steps_done += 1
+        if random.random() < eps:
+            return random.randint(0, self.action_dim - 1)
+        else:
+            with torch.no_grad():
+                state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+                return self.policy_net(state_tensor).argmax(1).item()
+
+    def store(self, s, a, r, s_, done):
+        self.memory.append((s, a, r, s_, done))
+
+    def update(self):
+        if len(self.memory) < self.batch_size:
+            return
+        batch = random.sample(self.memory, self.batch_size)
+        s, a, r, s_, d = zip(*batch)
+        s = torch.FloatTensor(s).to(self.device)
+        a = torch.LongTensor(a).unsqueeze(1).to(self.device)
+        r = torch.FloatTensor(r).unsqueeze(1).to(self.device)
+        s_ = torch.FloatTensor(s_).to(self.device)
+        d = torch.FloatTensor(d).unsqueeze(1).to(self.device)
+
+        q = self.policy_net(s).gather(1, a)
         with torch.no_grad():
-            return self.policy_net(state_tensor).argmax(1).item()
+            q_target = (
+                r + (1 - d) * self.gamma * self.target_net(s_).max(1, keepdim=True)[0]
+            )
+
+        loss = nn.MSELoss()(q, q_target)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+    def update_target(self):
+        self.target_net.load_state_dict(self.policy_net.state_dict())
 
 
 if __name__ == "__main__":
-    agent = DQNAgent()
-    agent.policy_net.load_state_dict(
-        torch.load("shooting_dqn.pt", map_location=agent.device)
-    )
-    print("모델 로드 완료: shooting_dqn.pt")
-
     env = ShootingGameEnv()
-    for ep in range(3):
-        print(f"\n[Inference Episode {ep+1}]")
+    agent = DQNAgent()
+    for ep in range(1000):
         state, _ = env.reset()
-        total_reward = 0
         done = False
+        total_reward = 0
         while not done:
             action = agent.select_action(state)
             next_state, reward, done, _, _ = env.step(action)
+            agent.store(state, action, reward, next_state, done)
+            agent.update()
             state = next_state
             total_reward += reward
-            env.render()
-        print(f"Total Reward: {total_reward}")
+        agent.update_target()
+        print(f"Episode {ep+1} Reward: {total_reward}")
 
-    plt.ioff()
-    plt.show()
+    torch.save(agent.policy_net.state_dict(), "shooting_dqn.pt")
+    print("Model saved as shooting_dqn.pt")
